@@ -9,9 +9,9 @@ BUILD_DIR=${SUBPROJECT_DIR}/build
 . ${BUILD_DIR}/buildinfo
 
 
-cd ${PROJECT_DIR}
+cd ${SUBPROJECT_DIR}
 
 
-${PROJECT_DIR}/gradlew :mqtt-rpc-common:publish \
+${PROJECT_DIR}/gradlew publish \
     -PrepositoryName=${REPOSITORY} \
     -PprojectVersion=${VERSION}
