@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
+import com.rsmaxwell.diaries.response.Responder;
+
 class RequestHandlerTest {
 	@Test
 	void appHasAGreeting() {

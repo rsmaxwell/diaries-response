@@ -1,4 +1,4 @@
-package com.rsmaxwell.mqtt.rpc.example.response.handlers;
+package com.rsmaxwell.diaries.response.handlers;
 
 import java.util.Map;
 
