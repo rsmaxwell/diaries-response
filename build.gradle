@@ -58,6 +58,7 @@ publishing {
             version = projectVersion
 
             from components["java"]
+            suppressPomMetadataWarningsFor('varient')
         }
     }
 
