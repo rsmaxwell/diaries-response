@@ -14,6 +14,6 @@ public class Quit extends RequestHandler {
 
 	public Result handleRequest(Map<String, Object> args) throws Exception {
 		logger.traceEntry();
-		return quit();
+		return Result.quit();
 	}
 }

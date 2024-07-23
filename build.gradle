@@ -3,6 +3,7 @@
 plugins {
     id 'application'
     id 'maven-publish'
+    id 'eclipse'
 }
 
 repositories {
@@ -17,15 +18,20 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     implementation libs.guava
-    implementation 'org.eclipse.paho:org.eclipse.paho.mqttv5.client:1.2.5'
+    implementation 'org.eclipse.paho:org.eclipse.paho.mqttv5.client:_'
     implementation 'commons-cli:commons-cli:1.8.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
-    
-    implementation 'org.apache.logging.log4j:log4j-core:3.0.0-beta2'
-    implementation 'org.apache.logging.log4j:log4j-api:3.0.0-beta2'
-    
-    implementation 'com.rsmaxwell.mqtt.rpc:mqtt-rpc-common:+'
-    implementation 'com.rsmaxwell.mqtt.rpc:mqtt-rpc-response:+'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:_'
+
+    implementation 'org.apache.logging.log4j:log4j-core:_'
+    implementation 'org.apache.logging.log4j:log4j-api:_'
+
+	compileOnly 'org.projectlombok:lombok:_'
+	annotationProcessor 'org.projectlombok:lombok:_'
+
+    implementation 'org.postgresql:postgresql:_'
+
+    implementation 'com.rsmaxwell.mqtt.rpc:mqtt-rpc-common:_'
+    implementation 'com.rsmaxwell.mqtt.rpc:mqtt-rpc-response:_'
 }
 
 java {

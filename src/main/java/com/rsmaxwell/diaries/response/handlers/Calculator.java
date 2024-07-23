@@ -38,12 +38,18 @@ public class Calculator extends RequestHandler {
 				value = param1 - param2;
 				break;
 			default:
-				throw new Exception(String.format("Unexpected operation: %s", operation));
+				String text = String.format("Unexpected operation: %s", operation);
+				logger.info(text);
+				throw new Exception(text);
 			}
 
-			return success(value);
+			return Result.success(value);
+		} catch (ArithmeticException e) {
+			logger.debug(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()));
+			return Result.badRequestException(e);
 		} catch (Exception e) {
-			return badRequest(e.getMessage());
+			logger.catching(e);
+			return Result.badRequestException(e);
 		}
 	}
 }

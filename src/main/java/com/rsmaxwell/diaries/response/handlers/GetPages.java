@@ -14,6 +14,6 @@ public class GetPages extends RequestHandler {
 
 	public Result handleRequest(Map<String, Object> args) throws Exception {
 		logger.traceEntry();
-		return success("[ 'one', 'two', 'three' ]");
+		return Result.success("[ 'one', 'two', 'three' ]");
 	}
 }
