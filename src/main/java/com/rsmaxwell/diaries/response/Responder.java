@@ -49,9 +49,9 @@ public class Responder {
 
 		logger.info("diaries Responder");
 
-		Config config = Config.get();
+		Config config = Config.read();
 
-		try (Connection conn = getConnection(config.getDb())) {
+		try (Connection db = getConnection(config.getDb())) {
 
 			MqttConfig mqtt = config.getMqtt();
 			String server = mqtt.getServer();
@@ -63,6 +63,8 @@ public class Responder {
 			MqttAsyncClient client_responder = new MqttAsyncClient(server, clientID_responder, persistence);
 			MqttAsyncClient client_subscriber = new MqttAsyncClient(server, clientID_subscriber, persistence);
 
+			Context ctx = new Context(db);
+			messageHandler.setContext(ctx);
 			messageHandler.setClient(client_responder);
 			client_subscriber.setCallback(messageHandler);
 

@@ -14,7 +14,7 @@ public class Register extends RequestHandler {
 	private static final Logger logger = LogManager.getLogger(Register.class);
 
 	@Override
-	public Result handleRequest(Map<String, Object> args) throws Exception {
+	public Result handleRequest(Object ctx, Map<String, Object> args) throws Exception {
 		logger.traceEntry();
 
 		try {

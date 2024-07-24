@@ -15,23 +15,23 @@ repositories {
 
 dependencies {
     testImplementation libs.junit.jupiter
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly libs.junit.platform.launcher
 
     implementation libs.guava
-    implementation 'org.eclipse.paho:org.eclipse.paho.mqttv5.client:_'
-    implementation 'commons-cli:commons-cli:1.8.0'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:_'
+    implementation libs.org.eclipse.paho.mqttv5.client
+    implementation libs.commons.cli
+    implementation libs.jackson.databind
 
-    implementation 'org.apache.logging.log4j:log4j-core:_'
-    implementation 'org.apache.logging.log4j:log4j-api:_'
+    implementation libs.log4j.core
+    implementation libs.log4j.api
 
-	compileOnly 'org.projectlombok:lombok:_'
-	annotationProcessor 'org.projectlombok:lombok:_'
+	compileOnly libs.lombok
+	annotationProcessor libs.lombok
 
-    implementation 'org.postgresql:postgresql:_'
+    implementation libs.postgresql
 
-    implementation 'com.rsmaxwell.mqtt.rpc:mqtt-rpc-common:_'
-    implementation 'com.rsmaxwell.mqtt.rpc:mqtt-rpc-response:_'
+    implementation libs.mqtt.rpc.common
+    implementation libs.mqtt.rpc.response
 }
 
 java {

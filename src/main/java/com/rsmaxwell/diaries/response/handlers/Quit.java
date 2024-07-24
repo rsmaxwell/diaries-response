@@ -12,7 +12,7 @@ public class Quit extends RequestHandler {
 
 	private static final Logger logger = LogManager.getLogger(Quit.class);
 
-	public Result handleRequest(Map<String, Object> args) throws Exception {
+	public Result handleRequest(Object ctx, Map<String, Object> args) throws Exception {
 		logger.traceEntry();
 		return Result.quit();
 	}
