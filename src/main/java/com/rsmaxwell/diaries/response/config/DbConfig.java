@@ -1,5 +1,7 @@
 package com.rsmaxwell.diaries.response.config;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -10,8 +12,8 @@ public class DbConfig {
 	private String host;
 	private int port;
 	private String database;
-	private String username;
-	private String password;
+	private User admin;
+	private List<User> users;
 
 	public String getJdbcUrl() {
 		return String.format("jdbc:%s://%s:%d/", jdbc.getDbms(), host, port);

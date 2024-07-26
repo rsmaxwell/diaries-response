@@ -17,6 +17,7 @@ import org.eclipse.paho.mqttv5.common.MqttSubscription;
 import com.rsmaxwell.diaries.response.config.Config;
 import com.rsmaxwell.diaries.response.config.DbConfig;
 import com.rsmaxwell.diaries.response.config.MqttConfig;
+import com.rsmaxwell.diaries.response.config.User;
 import com.rsmaxwell.diaries.response.handlers.Calculator;
 import com.rsmaxwell.diaries.response.handlers.GetPages;
 import com.rsmaxwell.diaries.response.handlers.Quit;
@@ -107,11 +108,15 @@ public class Responder {
 
 	public static Connection getConnection(DbConfig dbConfig) throws SQLException {
 
-		logger.info(String.format("Connecting to database '%s' as '%s'", dbConfig.getJdbcUrl(), dbConfig.getUsername()));
+		User admin = dbConfig.getAdmin();
+		String username = admin.getUsername();
+		String password = admin.getPassword();
+
+		logger.info(String.format("Connecting to database '%s' as '%s'", dbConfig.getJdbcUrl(), username));
 
 		Properties connectionProps = new Properties();
-		connectionProps.put("user", dbConfig.getUsername());
-		connectionProps.put("password", dbConfig.getPassword());
+		connectionProps.put("user", username);
+		connectionProps.put("password", password);
 
 		return DriverManager.getConnection(dbConfig.getJdbcUrl(), connectionProps);
 	}
