@@ -20,12 +20,12 @@ public class CreateDatabase {
 		DbConfig dbConfig = config.getDb();
 		String database = dbConfig.getDatabase();
 
-		try (Connection db = Sql.connect(dbConfig)) {
-			createDatabase(db, database);
-			createUsers(db, dbConfig);
+		try (Connection con = Database.connect(dbConfig)) {
+			createDatabase(con, database);
+			createUsers(con, dbConfig);
 		}
 
-		try (Connection con = Sql.connect(dbConfig, database)) {
+		try (Connection con = Database.connect(dbConfig, database)) {
 			createTables(con);
 		}
 
@@ -38,14 +38,14 @@ public class CreateDatabase {
 
 	public static void createTable(Connection con, String table) throws Exception {
 
-		boolean found = Sql.tableExists(con, table);
+		boolean found = Database.tableExists(con, table);
 
 		if (found) {
 			logger.info(String.format("table '%s' already exists", table));
 			return;
 		}
 
-		Sql.createDiaryTable(con);
+		Database.createDiaryTable(con);
 	}
 
 	public static void createUsers(Connection con, DbConfig dbConfig) throws Exception {
@@ -61,26 +61,26 @@ public class CreateDatabase {
 
 	public static void createUser(Connection con, String username, String password, String database) throws Exception {
 
-		boolean found = Sql.userExists(con, username);
+		boolean found = Database.userExists(con, username);
 
 		if (found) {
 			logger.info(String.format("user '%s' already exists", username));
 			return;
 		}
 
-		Sql.createUser(con, username, password);
-		Sql.grantPrivilagesToUser(con, database, username);
+		Database.createUser(con, username, password);
+		Database.grantPrivilagesToUser(con, database, username);
 	}
 
 	public static void createDatabase(Connection con, String database) throws Exception {
 
-		boolean found = Sql.databaseExists(con, database);
+		boolean found = Database.databaseExists(con, database);
 
 		if (found) {
 			logger.info(String.format("Database '%s' already exists", database));
 			return;
 		}
 
-		Sql.createDatabase(con, database);
+		Database.createDatabase(con, database);
 	}
 }

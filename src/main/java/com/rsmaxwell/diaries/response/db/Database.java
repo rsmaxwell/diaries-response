@@ -13,9 +13,9 @@ import org.apache.logging.log4j.Logger;
 import com.rsmaxwell.diaries.response.config.DbConfig;
 import com.rsmaxwell.diaries.response.db.model.Diary;
 
-public class Sql {
+public class Database {
 
-	private static final Logger logger = LogManager.getLogger(Sql.class);
+	private static final Logger logger = LogManager.getLogger(Database.class);
 
 	public static Connection connect(DbConfig dbConfig) throws SQLException {
 		return connect(dbConfig, "");

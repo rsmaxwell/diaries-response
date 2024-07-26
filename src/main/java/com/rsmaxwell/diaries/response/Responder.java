@@ -1,9 +1,6 @@
 package com.rsmaxwell.diaries.response;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +14,7 @@ import org.eclipse.paho.mqttv5.common.MqttSubscription;
 import com.rsmaxwell.diaries.response.config.Config;
 import com.rsmaxwell.diaries.response.config.DbConfig;
 import com.rsmaxwell.diaries.response.config.MqttConfig;
-import com.rsmaxwell.diaries.response.config.User;
+import com.rsmaxwell.diaries.response.db.Database;
 import com.rsmaxwell.diaries.response.handlers.Calculator;
 import com.rsmaxwell.diaries.response.handlers.GetPages;
 import com.rsmaxwell.diaries.response.handlers.Quit;
@@ -51,8 +48,10 @@ public class Responder {
 		logger.info("diaries Responder");
 
 		Config config = Config.read();
+		DbConfig dbConfig = config.getDb();
+		String databaseName = dbConfig.getDatabase();
 
-		try (Connection db = getConnection(config.getDb())) {
+		try (Connection db = Database.connect(dbConfig, databaseName)) {
 
 			MqttConfig mqtt = config.getMqtt();
 			String server = mqtt.getServer();
@@ -104,20 +103,5 @@ public class Responder {
 		}
 
 		logger.info("exiting");
-	}
-
-	public static Connection getConnection(DbConfig dbConfig) throws SQLException {
-
-		User admin = dbConfig.getAdmin();
-		String username = admin.getUsername();
-		String password = admin.getPassword();
-
-		logger.info(String.format("Connecting to database '%s' as '%s'", dbConfig.getJdbcUrl(), username));
-
-		Properties connectionProps = new Properties();
-		connectionProps.put("user", username);
-		connectionProps.put("password", password);
-
-		return DriverManager.getConnection(dbConfig.getJdbcUrl(), connectionProps);
 	}
 }

@@ -35,7 +35,7 @@ public class PopulateDatabase {
 			repository.save(new Diary("diary-1838"));
 			repository.save(new Diary("diary-1839"));
 
-			// fetch all customers
+			// fetch all diaries
 			log.info("Diaries found with findAll():");
 			log.info("-------------------------------");
 			repository.findAll().forEach(diary -> {
