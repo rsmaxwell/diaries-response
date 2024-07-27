@@ -1,4 +1,4 @@
-package com.rsmaxwell.diaries.response.db;
+package com.rsmaxwell.diaries.response.tools;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -7,8 +7,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
-import com.rsmaxwell.diaries.response.db.model.Diary;
-import com.rsmaxwell.diaries.response.db.model.DiaryRepository;
+import com.rsmaxwell.diaries.response.model.Diary;
+import com.rsmaxwell.diaries.response.repository.DiaryRepository;
 
 @SpringBootApplication
 public class PopulateDatabase {

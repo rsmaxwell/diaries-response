@@ -1,12 +1,11 @@
-package com.rsmaxwell.diaries.response;
+package com.rsmaxwell.diaries.response.buildinfo;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.rsmaxwell.diaries.response.buildinfo.BuildInfo;
 import com.rsmaxwell.mqtt.rpc.common.buildinfo.IBuildInfo;
 
-public class BuildInfoTest {
+public class BuildInfos {
 
 	public static void main(String[] args) throws Exception {
 

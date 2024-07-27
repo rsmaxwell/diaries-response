@@ -1,7 +1,5 @@
 package com.rsmaxwell.diaries.response;
 
-import java.sql.Connection;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
@@ -10,21 +8,26 @@ import org.eclipse.paho.mqttv5.client.MqttConnectionOptions;
 import org.eclipse.paho.mqttv5.client.persist.MqttDefaultFilePersistence;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttSubscription;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 
 import com.rsmaxwell.diaries.response.config.Config;
-import com.rsmaxwell.diaries.response.config.DbConfig;
 import com.rsmaxwell.diaries.response.config.MqttConfig;
-import com.rsmaxwell.diaries.response.db.Database;
 import com.rsmaxwell.diaries.response.handlers.Calculator;
 import com.rsmaxwell.diaries.response.handlers.GetPages;
 import com.rsmaxwell.diaries.response.handlers.Quit;
 import com.rsmaxwell.diaries.response.handlers.Register;
 import com.rsmaxwell.diaries.response.handlers.Signin;
+import com.rsmaxwell.diaries.response.repository.DiaryRepository;
+import com.rsmaxwell.diaries.response.repository.PersonRepository;
 import com.rsmaxwell.mqtt.rpc.response.MessageHandler;
 
+@SpringBootApplication
 public class Responder {
 
-	private static final Logger logger = LogManager.getLogger(Responder.class);
+	private static final Logger log = LogManager.getLogger(Responder.class);
 
 	static String clientID_responder = "responder";
 	static String clientID_subscriber = "listener";
@@ -43,15 +46,17 @@ public class Responder {
 		messageHandler.putHandler("quit", new Quit());
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) {
+		SpringApplication.run(Responder.class);
+	}
 
-		logger.info("diaries Responder");
+	@Bean
+	public CommandLineRunner demo(DiaryRepository diaryRepository, PersonRepository personRepository) {
+		return (args) -> {
 
-		Config config = Config.read();
-		DbConfig dbConfig = config.getDb();
-		String databaseName = dbConfig.getDatabase();
+			log.info("diaries Responder");
 
-		try (Connection db = Database.connect(dbConfig, databaseName)) {
+			Config config = Config.read();
 
 			MqttConfig mqtt = config.getMqtt();
 			String server = mqtt.getServer();
@@ -63,12 +68,10 @@ public class Responder {
 			MqttAsyncClient client_responder = new MqttAsyncClient(server, clientID_responder, persistence);
 			MqttAsyncClient client_subscriber = new MqttAsyncClient(server, clientID_subscriber, persistence);
 
-			Context ctx = new Context(db);
-			messageHandler.setContext(ctx);
 			messageHandler.setClient(client_responder);
 			client_subscriber.setCallback(messageHandler);
 
-			logger.info(String.format("Connecting to broker '%s' as '%s'", server, clientID_responder));
+			log.info(String.format("Connecting to broker '%s' as '%s'", server, clientID_responder));
 			MqttConnectionOptions connOpts_responder = new MqttConnectionOptions();
 			connOpts_responder.setUserName(username);
 			connOpts_responder.setPassword(password.getBytes());
@@ -76,32 +79,32 @@ public class Responder {
 			try {
 				client_responder.connect(connOpts_responder).waitForCompletion();
 			} catch (MqttException e) {
-				logger.info(String.format("Could not connect to the MQTT Broker at: %s", server));
+				log.info(String.format("Could not connect to the MQTT Broker at: %s", server));
 				return;
 			} catch (Exception e) {
-				logger.error("%s: %s", e.getClass().getSimpleName(), e.getMessage());
+				log.error("%s: %s", e.getClass().getSimpleName(), e.getMessage());
 				return;
 			}
 
-			logger.info(String.format("Connecting to broker '%s' as '%s'", server, clientID_subscriber));
+			log.info(String.format("Connecting to broker '%s' as '%s'", server, clientID_subscriber));
 			MqttConnectionOptions connOpts_subscriber = new MqttConnectionOptions();
 			connOpts_subscriber.setUserName(username);
 			connOpts_subscriber.setPassword(password.getBytes());
 			connOpts_subscriber.setCleanStart(true);
 			client_subscriber.connect(connOpts_subscriber).waitForCompletion();
 
-			logger.info(String.format("subscribing to: %s", requestTopic));
+			log.info(String.format("subscribing to: %s", requestTopic));
 			MqttSubscription subscription = new MqttSubscription(requestTopic);
 			client_subscriber.subscribe(subscription).waitForCompletion();
 
 			// Wait till quit request received
 			messageHandler.waitForCompletion();
 
-			logger.info("disconnect");
+			log.info("disconnect");
 			client_responder.disconnect().waitForCompletion();
 			client_subscriber.disconnect().waitForCompletion();
-		}
 
-		logger.info("exiting");
+			log.info("Success");
+		};
 	}
 }

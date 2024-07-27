@@ -1,4 +1,4 @@
-package com.rsmaxwell.diaries.response.db;
+package com.rsmaxwell.diaries.response.tools;
 
 import java.sql.Connection;
 
@@ -8,11 +8,10 @@ import org.apache.logging.log4j.Logger;
 import com.rsmaxwell.diaries.response.config.Config;
 import com.rsmaxwell.diaries.response.config.DbConfig;
 import com.rsmaxwell.diaries.response.config.User;
-import com.rsmaxwell.diaries.response.db.model.Diary;
 
 public class DeleteDatabase {
 
-	private static final Logger logger = LogManager.getLogger(DeleteDatabase.class);
+	private static final Logger log = LogManager.getLogger(DeleteDatabase.class);
 
 	public static void main(String[] args) throws Exception {
 
@@ -20,32 +19,12 @@ public class DeleteDatabase {
 		DbConfig dbConfig = config.getDb();
 		String database = dbConfig.getDatabase();
 
-		try (Connection con = Database.connect(dbConfig, database)) {
-			deleteTables(con);
-		}
-
 		try (Connection con = Database.connect(dbConfig)) {
 			deleteUsers(con, dbConfig);
 			deleteDatabase(con, database);
 		}
 
-		logger.info("exiting");
-	}
-
-	public static void deleteTables(Connection con) throws Exception {
-		deleteTable(con, Diary.TABLE_NAME);
-	}
-
-	public static void deleteTable(Connection con, String table) throws Exception {
-
-		boolean found = Database.tableExists(con, table);
-
-		if (!found) {
-			logger.info(String.format("table '%s' not found", table));
-			return;
-		}
-
-		Database.deleteTable(con, table);
+		log.info("Success");
 	}
 
 	public static void deleteUsers(Connection con, DbConfig dbConfig) throws Exception {
@@ -63,7 +42,7 @@ public class DeleteDatabase {
 		boolean found = Database.userExists(con, username);
 
 		if (!found) {
-			logger.info(String.format("user '%s' not found", username));
+			log.info(String.format("user '%s' not found", username));
 			return;
 		}
 
@@ -76,7 +55,7 @@ public class DeleteDatabase {
 		boolean found = Database.databaseExists(con, database);
 
 		if (!found) {
-			logger.info(String.format("Database '%s' not found", database));
+			log.info(String.format("Database '%s' not found", database));
 			return;
 		}
 

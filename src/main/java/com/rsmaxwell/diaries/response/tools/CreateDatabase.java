@@ -1,4 +1,4 @@
-package com.rsmaxwell.diaries.response.db;
+package com.rsmaxwell.diaries.response.tools;
 
 import java.sql.Connection;
 
@@ -8,11 +8,10 @@ import org.apache.logging.log4j.Logger;
 import com.rsmaxwell.diaries.response.config.Config;
 import com.rsmaxwell.diaries.response.config.DbConfig;
 import com.rsmaxwell.diaries.response.config.User;
-import com.rsmaxwell.diaries.response.db.model.Diary;
 
 public class CreateDatabase {
 
-	private static final Logger logger = LogManager.getLogger(CreateDatabase.class);
+	private static final Logger log = LogManager.getLogger(CreateDatabase.class);
 
 	public static void main(String[] args) throws Exception {
 
@@ -25,27 +24,7 @@ public class CreateDatabase {
 			createUsers(con, dbConfig);
 		}
 
-		try (Connection con = Database.connect(dbConfig, database)) {
-			createTables(con);
-		}
-
-		logger.info("exiting");
-	}
-
-	public static void createTables(Connection con) throws Exception {
-		createTable(con, Diary.TABLE_NAME);
-	}
-
-	public static void createTable(Connection con, String table) throws Exception {
-
-		boolean found = Database.tableExists(con, table);
-
-		if (found) {
-			logger.info(String.format("table '%s' already exists", table));
-			return;
-		}
-
-		Database.createDiaryTable(con);
+		log.info("exiting");
 	}
 
 	public static void createUsers(Connection con, DbConfig dbConfig) throws Exception {
@@ -64,7 +43,7 @@ public class CreateDatabase {
 		boolean found = Database.userExists(con, username);
 
 		if (found) {
-			logger.info(String.format("user '%s' already exists", username));
+			log.info(String.format("user '%s' already exists", username));
 			return;
 		}
 
@@ -77,7 +56,7 @@ public class CreateDatabase {
 		boolean found = Database.databaseExists(con, database);
 
 		if (found) {
-			logger.info(String.format("Database '%s' already exists", database));
+			log.info(String.format("Database '%s' already exists", database));
 			return;
 		}
 
