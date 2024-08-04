@@ -20,12 +20,10 @@ pushd %SUBPROJECT_DIR%\..
 set PROJECT_DIR=%CD%
 popd
 
-pushd %SUBPROJECT_DIR%\build
-set BUILD_DIR=%CD%
-popd
 
 
-cd %SUBPROJECT_DIR%
-del /Q %SUBPROJECT_DIR%\runtime\*
+
+cd %PROJECT_DIR%
+
 echo on
-%PROJECT_DIR%\gradlew getdeps --warning-mode all
+%PROJECT_DIR%\gradlew clean

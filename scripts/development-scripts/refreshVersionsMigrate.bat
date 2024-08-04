@@ -26,4 +26,4 @@ popd
 cd %PROJECT_DIR%
 
 echo on
-%PROJECT_DIR%\gradlew build
+%PROJECT_DIR%\gradlew refreshVersionsMigrate --mode=VersionCatalogOnly

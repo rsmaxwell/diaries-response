@@ -1,13 +1,13 @@
-package com.rsmaxwell.diaries.response.tools;
+package com.rsmaxwell.diaries.response;
 
 import java.sql.Connection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.rsmaxwell.diaries.response.config.Config;
-import com.rsmaxwell.diaries.response.config.DbConfig;
-import com.rsmaxwell.diaries.response.config.User;
+import com.rsmaxwell.diaries.common.config.Config;
+import com.rsmaxwell.diaries.common.config.DbConfig;
+import com.rsmaxwell.diaries.common.config.User;
 
 public class DeleteDatabase {
 

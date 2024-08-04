@@ -12,11 +12,11 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Entity
-@Table(name = "person")
+@Table(name = "role")
 @Data
 @RequiredArgsConstructor
 @NoArgsConstructor
-public class Person {
+public class Role {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,18 +24,6 @@ public class Person {
 	private long id;
 
 	@NonNull
-	@Column(name = "username", unique = true)
-	private String username;
-
-	@NonNull
-	@Column(name = "passwordHash")
-	private String passwordHash;
-
-	@NonNull
-	@Column(name = "firstName")
-	private String firstName;
-
-	@NonNull
-	@Column(name = "lastName")
-	private String lastName;
+	@Column(name = "name", unique = true)
+	private String name;
 }

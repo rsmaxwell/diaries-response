@@ -1,13 +1,13 @@
-package com.rsmaxwell.diaries.response.tools;
+package com.rsmaxwell.diaries.response;
 
 import java.sql.Connection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.rsmaxwell.diaries.response.config.Config;
-import com.rsmaxwell.diaries.response.config.DbConfig;
-import com.rsmaxwell.diaries.response.config.User;
+import com.rsmaxwell.diaries.common.config.Config;
+import com.rsmaxwell.diaries.common.config.DbConfig;
+import com.rsmaxwell.diaries.common.config.User;
 
 public class CreateDatabase {
 
@@ -24,7 +24,7 @@ public class CreateDatabase {
 			createUsers(con, dbConfig);
 		}
 
-		log.info("exiting");
+		log.info("Success");
 	}
 
 	public static void createUsers(Connection con, DbConfig dbConfig) throws Exception {
@@ -35,6 +35,8 @@ public class CreateDatabase {
 			String username = user.getUsername();
 			String password = user.getPassword();
 			createUser(con, username, password, database);
+
+			Database.grantPrivilagesToUser(con, database, username);
 		}
 	}
 
@@ -48,7 +50,6 @@ public class CreateDatabase {
 		}
 
 		Database.createUser(con, username, password);
-		Database.grantPrivilagesToUser(con, database, username);
 	}
 
 	public static void createDatabase(Connection con, String database) throws Exception {

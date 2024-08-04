@@ -16,24 +16,29 @@ dependencies {
     testImplementation libs.junit.jupiter
     testRuntimeOnly libs.junit.platform.launcher
 
-    implementation libs.org.eclipse.paho.mqttv5.client
-    implementation libs.commons.cli
-    implementation libs.jackson.databind
-
     implementation libs.log4j.core
     implementation libs.log4j.api
 
 	compileOnly libs.lombok
 	annotationProcessor libs.lombok
 
+	implementation libs.spring.boot.starter.data.jdbc
+	implementation libs.spring.boot.starter.data.jpa
+	implementation libs.spring.boot.starter.jdbc
+	
+    runtimeOnly libs.postgresql
+    implementation libs.org.eclipse.paho.mqttv5.client
+    implementation libs.jbcrypt
+    implementation libs.jackson.databind
+    implementation libs.jjwt.api
+    runtimeOnly libs.jjwt.impl
+    runtimeOnly libs.jjwt.jackson
+    
+        
     implementation libs.mqtt.rpc.common
     implementation libs.mqtt.rpc.response
     
-   	implementation libs.spring.boot.starter.data.jpa
-	testImplementation libs.spring.boot.starter.test
-	
-	runtimeOnly libs.h2
-    runtimeOnly libs.postgresql
+    implementation project(':diaries-common')
 }
 
 java {

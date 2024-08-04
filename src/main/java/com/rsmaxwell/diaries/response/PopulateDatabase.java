@@ -1,4 +1,4 @@
-package com.rsmaxwell.diaries.response.tools;
+package com.rsmaxwell.diaries.response;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,7 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import com.rsmaxwell.diaries.response.model.Diary;
+import com.rsmaxwell.diaries.response.model.Role;
 import com.rsmaxwell.diaries.response.repository.DiaryRepository;
+import com.rsmaxwell.diaries.response.repository.RoleRepository;
 
 @SpringBootApplication
 public class PopulateDatabase {
@@ -20,10 +22,13 @@ public class PopulateDatabase {
 	}
 
 	@Bean
-	public CommandLineRunner demo(DiaryRepository repository) {
+	CommandLineRunner populate(DiaryRepository repository) {
 		return (args) -> {
 
-			log.info("Save the list of diaries");
+			log.info("Refresh the diaries");
+
+			repository.deleteAll();
+
 			repository.save(new Diary("diary-1828-and-1829-and-jan-1830"));
 			repository.save(new Diary("diary-1830"));
 			repository.save(new Diary("diary-1831"));
@@ -34,29 +39,21 @@ public class PopulateDatabase {
 			repository.save(new Diary("diary-1837"));
 			repository.save(new Diary("diary-1838"));
 			repository.save(new Diary("diary-1839"));
+		};
+	}
 
-			// fetch all diaries
-			log.info("Diaries found with findAll():");
-			log.info("-------------------------------");
-			repository.findAll().forEach(diary -> {
-				log.info(diary.toString());
-			});
-			log.info("");
+	@Bean
+	CommandLineRunner role(RoleRepository repository) {
+		return (args) -> {
 
-			// fetch an individual diary by ID
-			Diary diary = repository.findById(1L);
-			log.info("Diary found with findById(1L):");
-			log.info("--------------------------------");
-			log.info(diary.toString());
-			log.info("");
+			log.info("Refresh the roles");
 
-			// fetch diaries by path
-			log.info("Diary found with findByPath('diary-1837'):");
-			log.info("--------------------------------------------");
-			repository.findByPath("diary-1837").forEach(d -> {
-				log.info(d.toString());
-			});
-			log.info("Success");
+			repository.deleteAll();
+
+			log.info("Save the list of roles");
+			repository.save(new Role("admin"));
+			repository.save(new Role("editor"));
+			repository.save(new Role("viewer"));
 		};
 	}
 }

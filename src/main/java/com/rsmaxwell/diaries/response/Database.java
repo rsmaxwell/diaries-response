@@ -1,16 +1,18 @@
-package com.rsmaxwell.diaries.response.tools;
+package com.rsmaxwell.diaries.response;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.rsmaxwell.diaries.response.config.DbConfig;
+import com.rsmaxwell.diaries.common.config.DbConfig;
 
 public class Database {
 
@@ -79,9 +81,9 @@ public class Database {
 		String sql = String.format("REVOKE ALL PRIVILEGES ON DATABASE %s FROM %s;", database, username);
 
 		try (Statement stmt = con.createStatement()) {
+			log.info(sql);
 			stmt.executeUpdate(sql);
 		} catch (Exception e) {
-			log.info(sql);
 			throw e;
 		}
 	}
@@ -92,9 +94,9 @@ public class Database {
 		String sql = String.format("DROP ROLE %s;", username);
 
 		try (Statement stmt = con.createStatement()) {
+			log.info(sql);
 			stmt.executeUpdate(sql);
 		} catch (Exception e) {
-			log.info(sql);
 			throw e;
 		}
 	}
@@ -105,9 +107,9 @@ public class Database {
 		String sql = String.format("DROP DATABASE %s", database);
 
 		try (Statement stmt = con.createStatement()) {
+			log.info(sql);
 			stmt.executeUpdate(sql);
 		} catch (Exception e) {
-			log.info(sql);
 			throw e;
 		}
 	}
@@ -118,9 +120,9 @@ public class Database {
 		String sql = String.format("DROP TABLE %s", table);
 
 		try (Statement stmt = con.createStatement()) {
+			log.info(sql);
 			stmt.executeUpdate(sql);
 		} catch (Exception e) {
-			log.info(sql);
 			throw e;
 		}
 	}
@@ -131,9 +133,9 @@ public class Database {
 		String sql = String.format("CREATE DATABASE %s", database);
 
 		try (Statement stmt = con.createStatement()) {
+			log.info(sql);
 			stmt.executeUpdate(sql);
 		} catch (Exception e) {
-			log.info(sql);
 			throw e;
 		}
 	}
@@ -144,9 +146,9 @@ public class Database {
 		String sql = String.format("CREATE USER %s WITH ENCRYPTED PASSWORD '%s';", username, password);
 
 		try (Statement stmt = con.createStatement()) {
+			log.info(sql);
 			stmt.executeUpdate(sql);
 		} catch (Exception e) {
-			log.info(sql);
 			throw e;
 		}
 	}
@@ -154,13 +156,18 @@ public class Database {
 	public static void grantPrivilagesToUser(Connection con, String database, String username) throws Exception {
 		log.debug(String.format("grantPrivilagesToUser: database: '%s', username: '%s'", database, username));
 
-		String sql = String.format("GRANT ALL PRIVILEGES ON DATABASE %s TO %s;", database, username);
+		List<String> list = new ArrayList<String>();
+		list.add(String.format("GRANT ALL PRIVILEGES ON DATABASE %s TO %s;", database, username));
+		list.add(String.format("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %s TO %s;", "public", username));
+		list.add(String.format("GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA %s TO %s;", "public", username));
 
-		try (Statement stmt = con.createStatement()) {
-			stmt.executeUpdate(sql);
-		} catch (Exception e) {
-			log.info(sql);
-			throw e;
+		for (String sql : list) {
+			try (Statement stmt = con.createStatement()) {
+				log.info(sql);
+				stmt.executeUpdate(sql);
+			} catch (Exception e) {
+				throw e;
+			}
 		}
 	}
 }
