@@ -22,10 +22,6 @@ dependencies {
 	compileOnly libs.lombok
 	annotationProcessor libs.lombok
 
-	implementation libs.spring.boot.starter.data.jdbc
-	implementation libs.spring.boot.starter.data.jpa
-	implementation libs.spring.boot.starter.jdbc
-	
     runtimeOnly libs.postgresql
     implementation libs.org.eclipse.paho.mqttv5.client
     implementation libs.jbcrypt
@@ -33,7 +29,8 @@ dependencies {
     implementation libs.jjwt.api
     runtimeOnly libs.jjwt.impl
     runtimeOnly libs.jjwt.jackson
-    
+    compileOnly libs.jakarta.jakartaee.api
+    implementation libs.hibernate.core
         
     implementation libs.mqtt.rpc.common
     implementation libs.mqtt.rpc.response

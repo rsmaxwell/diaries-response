@@ -2,58 +2,95 @@ package com.rsmaxwell.diaries.response;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 
+import com.rsmaxwell.diaries.common.config.Config;
+import com.rsmaxwell.diaries.common.config.DbConfig;
 import com.rsmaxwell.diaries.response.model.Diary;
 import com.rsmaxwell.diaries.response.model.Role;
 import com.rsmaxwell.diaries.response.repository.DiaryRepository;
 import com.rsmaxwell.diaries.response.repository.RoleRepository;
+import com.rsmaxwell.diaries.response.repositoryImpl.DiaryRepositoryImpl;
+import com.rsmaxwell.diaries.response.repositoryImpl.RoleRepositoryImpl;
+import com.rsmaxwell.diaries.response.utilities.GetEntityManager;
 
-@SpringBootApplication
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
 public class PopulateDatabase {
 
 	private static final Logger log = LogManager.getLogger(PopulateDatabase.class);
 
-	public static void main(String[] args) {
-		SpringApplication.run(PopulateDatabase.class);
+	private DiaryRepository diaryRepository;
+	private RoleRepository roleRepository;
+
+	public PopulateDatabase(DiaryRepository diaryRepository, RoleRepository roleRepository) {
+		this.diaryRepository = diaryRepository;
+		this.roleRepository = roleRepository;
 	}
 
-	@Bean
-	CommandLineRunner populate(DiaryRepository repository) {
-		return (args) -> {
+	public static void main(String[] args) throws Exception {
 
-			log.info("Refresh the diaries");
+		Config config = Config.read();
+		DbConfig dbConfig = config.getDb();
 
-			repository.deleteAll();
+		EntityTransaction tx = null;
+		// @formatter:off
+		try (EntityManagerFactory entityManagerFactory = GetEntityManager.factory(dbConfig); 
+			 EntityManager entityManager = entityManagerFactory.createEntityManager()) {
+			// @formatter:on
 
-			repository.save(new Diary("diary-1828-and-1829-and-jan-1830"));
-			repository.save(new Diary("diary-1830"));
-			repository.save(new Diary("diary-1831"));
-			repository.save(new Diary("diary-1832"));
-			repository.save(new Diary("diary-1834"));
-			repository.save(new Diary("diary-1835"));
-			repository.save(new Diary("diary-1836"));
-			repository.save(new Diary("diary-1837"));
-			repository.save(new Diary("diary-1838"));
-			repository.save(new Diary("diary-1839"));
-		};
+			DiaryRepository diaryRepository = new DiaryRepositoryImpl(entityManager);
+			RoleRepository roleRepository = new RoleRepositoryImpl(entityManager);
+			PopulateDatabase p = new PopulateDatabase(diaryRepository, roleRepository);
+
+			tx = entityManager.getTransaction();
+			tx.begin();
+
+			p.populateDiaries();
+			p.populateRoles();
+
+			tx.commit();
+
+			log.info("Success");
+
+		} catch (Exception e) {
+			log.catching(e);
+			if (tx != null) {
+				tx.rollback();
+			}
+			return;
+		}
 	}
 
-	@Bean
-	CommandLineRunner role(RoleRepository repository) {
-		return (args) -> {
+	public void populateDiaries() {
 
-			log.info("Refresh the roles");
+		log.info("Refresh the diaries");
 
-			repository.deleteAll();
+		diaryRepository.deleteAll();
 
-			log.info("Save the list of roles");
-			repository.save(new Role("admin"));
-			repository.save(new Role("editor"));
-			repository.save(new Role("viewer"));
-		};
+		diaryRepository.save(new Diary("diary-1828-and-1829-and-jan-1830"));
+		diaryRepository.save(new Diary("diary-1830"));
+		diaryRepository.save(new Diary("diary-1831"));
+		diaryRepository.save(new Diary("diary-1832"));
+		diaryRepository.save(new Diary("diary-1834"));
+		diaryRepository.save(new Diary("diary-1835"));
+		diaryRepository.save(new Diary("diary-1836"));
+		diaryRepository.save(new Diary("diary-1837"));
+		diaryRepository.save(new Diary("diary-1838"));
+		Diary x = diaryRepository.save(new Diary("diary-1839"));
+
+		diaryRepository.delete(x);
+	}
+
+	public void populateRoles() {
+
+		log.info("Refresh the roles");
+
+		roleRepository.deleteAll();
+
+		roleRepository.save(new Role("admin"));
+		roleRepository.save(new Role("editor"));
+		roleRepository.save(new Role("viewer"));
 	}
 }

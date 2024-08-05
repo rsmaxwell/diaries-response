@@ -1,8 +1,5 @@
 package com.rsmaxwell.diaries.response;
 
-import java.util.List;
-import java.util.Properties;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
@@ -13,7 +10,6 @@ import org.eclipse.paho.mqttv5.common.MqttSubscription;
 
 import com.rsmaxwell.diaries.common.config.Config;
 import com.rsmaxwell.diaries.common.config.DbConfig;
-import com.rsmaxwell.diaries.common.config.Jdbc;
 import com.rsmaxwell.diaries.common.config.MqttConfig;
 import com.rsmaxwell.diaries.common.config.User;
 import com.rsmaxwell.diaries.response.handlers.Calculator;
@@ -22,10 +18,10 @@ import com.rsmaxwell.diaries.response.handlers.Quit;
 import com.rsmaxwell.diaries.response.handlers.Register;
 import com.rsmaxwell.diaries.response.handlers.Signin;
 import com.rsmaxwell.diaries.response.utilities.DiaryContext;
+import com.rsmaxwell.diaries.response.utilities.GetEntityManager;
 import com.rsmaxwell.mqtt.rpc.response.MessageHandler;
 
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 
 public class Responder {
 
@@ -54,7 +50,7 @@ public class Responder {
 		String server = mqtt.getServer();
 		User user = mqtt.getUser();
 
-		try (EntityManagerFactory entityManagerFactory = getEntityManagerFactory(dbConfig)) {
+		try (EntityManagerFactory entityManagerFactory = GetEntityManager.factory(dbConfig)) {
 
 			DiaryContext context = new DiaryContext();
 			context.setEntityManagerFactory(entityManagerFactory);
@@ -99,39 +95,5 @@ public class Responder {
 			log.catching(e);
 			return;
 		}
-	}
-
-	public static EntityManagerFactory getEntityManagerFactory(DbConfig dbConfig) {
-
-		EntityManagerFactory entityManagerFactory = null;
-
-		try {
-			Jdbc jdbc = dbConfig.getJdbc();
-			List<User> users = dbConfig.getUsers();
-			if (users.size() <= 0) {
-				throw new Exception("No users defined in configuration");
-			}
-			User user = users.get(0);
-
-			Properties props = new Properties();
-			props.put("jakarta.persistence.jdbc.url", dbConfig.getJdbcUrlWithDatabase());
-			props.put("jakarta.persistence.jdbc.driver", jdbc.getDriver());
-			props.put("jakarta.persistence.jdbc.user", user.getUsername());
-			props.put("jakarta.persistence.jdbc.password", user.getPassword());
-
-			log.debug("JDBC properties:");
-			for (String key : props.stringPropertyNames()) {
-				log.debug(String.format("    %s : %s", key, props.getProperty(key)));
-			}
-
-			entityManagerFactory = Persistence.createEntityManagerFactory("com.rsmaxwell.diaries", props);
-
-		} catch (Throwable ex) {
-			// Make sure you log the exception, as it might be swallowed
-			System.err.println("Initial SessionFactory creation failed." + ex);
-			throw new ExceptionInInitializerError(ex);
-		}
-
-		return entityManagerFactory;
 	}
 }
