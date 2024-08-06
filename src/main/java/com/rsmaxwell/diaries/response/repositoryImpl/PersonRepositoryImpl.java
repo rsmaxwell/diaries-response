@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.rsmaxwell.diaries.response.model.Person;
+import com.rsmaxwell.diaries.response.repository.PersonRepository;
 
 import jakarta.persistence.EntityManager;
 
-public class PersonRepositoryImpl extends AbstractCrudRepository<Person, Long> {
+public class PersonRepositoryImpl extends AbstractCrudRepository<Person, Long> implements PersonRepository {
 
 	public PersonRepositoryImpl(EntityManager entityManager) {
 		super(entityManager);
@@ -49,5 +50,20 @@ public class PersonRepositoryImpl extends AbstractCrudRepository<Person, Long> {
 		list.add(entity.getFirstName());
 		list.add(entity.getLastName());
 		return list;
+	}
+
+	public Person getObjectFromResult(Object[] result) {
+
+		if (result.length < 5) {
+			throw new RuntimeException(String.format("Unexpected size of results: %d", result.length));
+		}
+
+		Long id = ((Number) result[0]).longValue();
+		String username = (String) result[1];
+		String passwordhash = (String) result[2];
+		String firstName = (String) result[3];
+		String lastName = (String) result[4];
+
+		return new Person(id, username, passwordhash, firstName, lastName);
 	}
 }

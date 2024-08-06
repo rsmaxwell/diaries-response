@@ -45,4 +45,16 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> imp
 		list.add(entity.getPath());
 		return list;
 	}
+
+	public Diary getObjectFromResult(Object[] result) {
+
+		if (result.length < 2) {
+			throw new RuntimeException(String.format("Unexpected size of results: %d", result.length));
+		}
+
+		Long id = ((Number) result[0]).longValue();
+		String path = (String) result[1];
+
+		return new Diary(id, path);
+	}
 }

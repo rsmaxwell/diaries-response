@@ -36,26 +36,25 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 
 	abstract public <S extends T> List<String> getValues(S entity);
 
-	public EntityManager getEntityManager() {
-		return entityManager;
-	}
+	abstract public T getObjectFromResult(Object[] result);
 
 	public long count() {
-		Query query = entityManager.createQuery("select count(*)");
+		String sql = String.format("select count(*) from %s", getTable());
+		Query query = entityManager.createNativeQuery(sql);
 		Object object = query.getSingleResult();
-		return (long) object;
+		return ((Number) object).longValue();
 	}
 
 	public void delete(T entity) {
 		String sql = String.format("delete from %s where %s = %s", getTable(), getPrimaryKeyField(), getPrimaryKeyValueAsString(entity));
-		Query query = getEntityManager().createNativeQuery(sql);
+		Query query = entityManager.createNativeQuery(sql);
 		int count = query.executeUpdate();
 		log.info(String.format("deleteAll --> count: %d", count));
 	}
 
 	public void deleteAll() {
 		String sql = String.format("delete from %s", getTable());
-		Query query = getEntityManager().createNativeQuery(sql);
+		Query query = entityManager.createNativeQuery(sql);
 		int count = query.executeUpdate();
 		log.info(String.format("deleteAll --> count: %d", count));
 	}
@@ -74,28 +73,43 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 
 	public void deleteById(ID id) {
 		String sql = String.format("delete from %s where %s = %s", getTable(), getPrimaryKeyField(), convertPrimaryKeyValueToString(id));
-		Query query = getEntityManager().createNativeQuery(sql);
+		log.info(String.format("sql: %s", sql));
+
+		Query query = entityManager.createNativeQuery(sql);
 		int count = query.executeUpdate();
-		log.info(String.format("deleteAll --> count: %d", count));
+		log.info(String.format("deleteById --> count: %d", count));
 	}
 
 	public boolean existsById(ID id) {
 		String sql = String.format("select exists(select 1 from %s where %s = %s)", getTable(), getPrimaryKeyField(), convertPrimaryKeyValueToString(id));
-		Query query = getEntityManager().createNativeQuery(sql);
-		int count = query.executeUpdate();
-		log.info(String.format("exists --> count: %d", count));
-		return (count > 0);
+		log.debug(String.format("sql: %s", sql));
+
+		Query query = entityManager.createNativeQuery(sql);
+		return (Boolean) query.getSingleResult();
 	}
 
 	@SuppressWarnings("unchecked")
 	public Iterable<T> findAll() {
-		String sql = String.format("select * from %s", getTable());
-		Query query = getEntityManager().createNativeQuery(sql);
-		List<?> raw = query.getResultList();
+
+		StringBuffer sql = new StringBuffer();
+		sql.append("select ");
+		sql.append(getPrimaryKeyField());
+
+		for (String field : getFields()) {
+			sql.append(", ");
+			sql.append(field);
+		}
+
+		sql.append(" from ");
+		sql.append(getTable());
+
+		Query query = entityManager.createNativeQuery(sql.toString());
+		List<Object[]> resultList = query.getResultList();
 
 		List<T> list = new ArrayList<T>();
-		for (Object obj : raw) {
-			list.add((T) obj);
+		for (Object[] result : resultList) {
+			T x = getObjectFromResult(result);
+			list.add(x);
 		}
 
 		return list;
@@ -106,12 +120,29 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 
 		List<T> list = new ArrayList<T>();
 		for (ID id : ids) {
-			String sql = String.format("select * from %s where %s = %s", getTable(), getPrimaryKeyField(), convertPrimaryKeyValueToString(id));
-			Query query = getEntityManager().createNativeQuery(sql);
-			List<?> raw = query.getResultList();
 
-			for (Object obj : raw) {
-				list.add((T) obj);
+			StringBuffer sql = new StringBuffer();
+			sql.append("select ");
+			sql.append(getPrimaryKeyField());
+
+			for (String field : getFields()) {
+				sql.append(", ");
+				sql.append(field);
+			}
+
+			sql.append(" from ");
+			sql.append(getTable());
+			sql.append(" where ");
+			sql.append(getPrimaryKeyField());
+			sql.append(" = ");
+			sql.append(convertPrimaryKeyValueToString(id));
+
+			Query query = entityManager.createNativeQuery(sql.toString());
+			List<Object[]> resultList = query.getResultList();
+
+			for (Object[] result : resultList) {
+				T x = getObjectFromResult(result);
+				list.add(x);
 			}
 		}
 
@@ -123,12 +154,28 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 
 		List<T> list = new ArrayList<T>();
 
-		String sql = String.format("select * from %s where %s = %s", getTable(), getPrimaryKeyField(), convertPrimaryKeyValueToString(id));
-		Query query = getEntityManager().createNativeQuery(sql);
-		List<?> raw = query.getResultList();
+		StringBuffer sql = new StringBuffer();
+		sql.append("select ");
+		sql.append(getPrimaryKeyField());
 
-		for (Object obj : raw) {
-			list.add((T) obj);
+		for (String field : getFields()) {
+			sql.append(", ");
+			sql.append(field);
+		}
+
+		sql.append(" from ");
+		sql.append(getTable());
+		sql.append(" where ");
+		sql.append(getPrimaryKeyField());
+		sql.append(" = ");
+		sql.append(convertPrimaryKeyValueToString(id));
+
+		Query query = entityManager.createNativeQuery(sql.toString());
+		List<Object[]> resultList = query.getResultList();
+
+		for (Object[] result : resultList) {
+			T x = getObjectFromResult(result);
+			list.add(x);
 		}
 
 		if (list.size() <= 0) {
@@ -152,7 +199,7 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 		separator = "";
 		StringBuffer valuesBuffer = new StringBuffer();
 		for (String value : getValues(entity)) {
-			fieldsBuffer.append(separator);
+			valuesBuffer.append(separator);
 			valuesBuffer.append("'");
 			valuesBuffer.append(value);
 			valuesBuffer.append("'");
@@ -160,7 +207,7 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 		}
 
 		String sql = String.format("insert into %s ( %s ) values ( %s ) returning %s", getTable(), fieldsBuffer, valuesBuffer, getPrimaryKeyField());
-		Query query = getEntityManager().createNativeQuery(sql);
+		Query query = entityManager.createNativeQuery(sql);
 		Object value = query.getSingleResult();
 		log.info(String.format("save --> %s: %s", getPrimaryKeyField(), value.toString()));
 

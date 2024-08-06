@@ -45,4 +45,16 @@ public class RoleRepositoryImpl extends AbstractCrudRepository<Role, Long> imple
 		list.add(entity.getName());
 		return list;
 	}
+
+	public Role getObjectFromResult(Object[] result) {
+
+		if (result.length < 2) {
+			throw new RuntimeException(String.format("Unexpected size of results: %d", result.length));
+		}
+
+		Long id = ((Number) result[0]).longValue();
+		String name = (String) result[1];
+
+		return new Role(id, name);
+	}
 }
