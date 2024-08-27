@@ -27,12 +27,14 @@ popd
 
 cd %PROJECT_DIR%
 
+
 set CLASSPATH="%SUBPROJECT_DIR%\bin\main
-set CLASSPATH=%CLASSPATH%;%SUBPROJECT_DIR%\src\main\resources
+set CLASSPATH=%CLASSPATH%;%SUBPROJECT_DIR%\src\main\resources\META-INF
 for /R %SUBPROJECT_DIR%\runtime %%a in (*.jar) do (
   set CLASSPATH=!CLASSPATH!;%%a
 )
 set CLASSPATH=%CLASSPATH%"
 
+set LOGGER_LEVEL=DEBUG
 java -classpath %CLASSPATH% com.rsmaxwell.diaries.response.Responder --username %MQTT_USERNAME% --password %MQTT_PASSWORD%
 

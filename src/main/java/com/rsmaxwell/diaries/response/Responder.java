@@ -13,6 +13,7 @@ import com.rsmaxwell.diaries.common.config.DbConfig;
 import com.rsmaxwell.diaries.common.config.MqttConfig;
 import com.rsmaxwell.diaries.common.config.User;
 import com.rsmaxwell.diaries.response.handlers.Calculator;
+import com.rsmaxwell.diaries.response.handlers.GetDiaries;
 import com.rsmaxwell.diaries.response.handlers.GetPages;
 import com.rsmaxwell.diaries.response.handlers.Quit;
 import com.rsmaxwell.diaries.response.handlers.Register;
@@ -37,6 +38,7 @@ public class Responder {
 	static {
 		messageHandler.putHandler("calculator", new Calculator());
 		messageHandler.putHandler("getPages", new GetPages());
+		messageHandler.putHandler("getDiaries", new GetDiaries());
 		messageHandler.putHandler("register", new Register());
 		messageHandler.putHandler("signin", new Signin());
 		messageHandler.putHandler("quit", new Quit());
