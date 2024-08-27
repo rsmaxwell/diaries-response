@@ -57,6 +57,7 @@ public class Responder {
 			DiaryContext context = new DiaryContext();
 			context.setEntityManagerFactory(entityManagerFactory);
 			context.setSecret(config.getSecret());
+			context.setDiaries(config.getDiaries());
 
 			MqttClientPersistence persistence = new MqttDefaultFilePersistence();
 			MqttAsyncClient client_responder = new MqttAsyncClient(server, clientID_responder, persistence);

@@ -33,20 +33,27 @@ public class DeleteDatabase {
 
 		for (User user : dbConfig.getUsers()) {
 			String username = user.getUsername();
+
 			deleteUser(con, username, database);
 		}
 	}
 
 	public static void deleteUser(Connection con, String username, String database) throws Exception {
 
-		boolean found = Database.userExists(con, username);
+		boolean userFound = Database.userExists(con, username);
 
-		if (!found) {
+		if (!userFound) {
 			log.info(String.format("user '%s' not found", username));
 			return;
 		}
 
-		Database.removePrivilagesFromUser(con, database, username);
+		boolean databaseFound = Database.databaseExists(con, database);
+		if (databaseFound) {
+			Database.removePrivilagesFromUser(con, database, username);
+		}
+
+		Database.reAssignUserRoles(con, username, "postgres");
+		Database.dropOwnedByUser(con, username);
 		Database.deleteUser(con, username);
 	}
 

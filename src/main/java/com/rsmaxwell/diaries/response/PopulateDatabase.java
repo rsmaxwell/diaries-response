@@ -78,9 +78,7 @@ public class PopulateDatabase {
 		diaryRepository.save(new Diary("diary-1836"));
 		diaryRepository.save(new Diary("diary-1837"));
 		diaryRepository.save(new Diary("diary-1838"));
-		Diary x = diaryRepository.save(new Diary("diary-1839"));
-
-		diaryRepository.delete(x);
+		diaryRepository.save(new Diary("diary-1839"));
 	}
 
 	public void populateRoles() {

@@ -88,6 +88,32 @@ public class Database {
 		}
 	}
 
+	public static void reAssignUserRoles(Connection con, String username, String username2) throws Exception {
+		log.debug(String.format("reAssignUserRoles: '%s'", username));
+
+		String sql = String.format("REASSIGN OWNED BY %s TO %s;", username, username2);
+
+		try (Statement stmt = con.createStatement()) {
+			log.info(sql);
+			stmt.executeUpdate(sql);
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+	public static void dropOwnedByUser(Connection con, String username) throws Exception {
+		log.debug(String.format("dropOwnedByUser: '%s'", username));
+
+		String sql = String.format("DROP OWNED BY %s;", username);
+
+		try (Statement stmt = con.createStatement()) {
+			log.info(sql);
+			stmt.executeUpdate(sql);
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
 	public static void deleteUser(Connection con, String username) throws Exception {
 		log.debug(String.format("deleteUser: '%s'", username));
 

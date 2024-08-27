@@ -8,7 +8,7 @@ import com.rsmaxwell.diaries.response.repository.DiaryRepository;
 
 import jakarta.persistence.EntityManager;
 
-public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> implements DiaryRepository {
+public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, String> implements DiaryRepository {
 
 	public DiaryRepositoryImpl(EntityManager entityManager) {
 		super(entityManager);
@@ -19,19 +19,19 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> imp
 	}
 
 	public String getPrimaryKeyField() {
-		return "id";
+		return "path";
 	}
 
 	public <S extends Diary> String getPrimaryKeyValueAsString(S entity) {
-		return entity.getId().toString();
+		return entity.getPath();
 	}
 
-	public String convertPrimaryKeyValueToString(Long id) {
-		return id.toString();
+	public String convertPrimaryKeyValueToString(String id) {
+		return id;
 	}
 
 	public <S extends Diary> void setPrimaryKeyValue(S entity, Object value) {
-		entity.setId((Long) value);
+		entity.setPath((String) value);
 	}
 
 	public List<String> getFields() {
@@ -48,13 +48,12 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> imp
 
 	public Diary getObjectFromResult(Object[] result) {
 
-		if (result.length < 2) {
+		if (result.length < 1) {
 			throw new RuntimeException(String.format("Unexpected size of results: %d", result.length));
 		}
 
-		Long id = ((Number) result[0]).longValue();
-		String path = (String) result[1];
+		String path = (String) result[0];
 
-		return new Diary(id, path);
+		return new Diary(path);
 	}
 }

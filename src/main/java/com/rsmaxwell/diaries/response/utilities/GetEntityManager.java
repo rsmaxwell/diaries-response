@@ -1,6 +1,7 @@
 package com.rsmaxwell.diaries.response.utilities;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +24,7 @@ public class GetEntityManager {
 
 		try {
 			Jdbc jdbc = dbConfig.getJdbc();
+			Map<String, String> additionalConnectionProperties = dbConfig.getAdditionalConnectionProperties();
 			List<User> users = dbConfig.getUsers();
 			if (users.size() <= 0) {
 				throw new Exception("No users defined in configuration");
@@ -35,7 +37,14 @@ public class GetEntityManager {
 			props.put("jakarta.persistence.jdbc.user", user.getUsername());
 			props.put("jakarta.persistence.jdbc.password", user.getPassword());
 
-			log.debug("JDBC properties:");
+			if (additionalConnectionProperties != null) {
+				for (String key : additionalConnectionProperties.keySet()) {
+					String value = additionalConnectionProperties.get(key);
+					props.put(key, value);
+				}
+			}
+
+			log.debug("Connection properties:");
 			for (String key : props.stringPropertyNames()) {
 				log.debug(String.format("    %s : %s", key, props.getProperty(key)));
 			}
