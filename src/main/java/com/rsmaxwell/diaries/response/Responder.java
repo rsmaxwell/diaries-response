@@ -1,5 +1,10 @@
 package com.rsmaxwell.diaries.response;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
@@ -18,10 +23,13 @@ import com.rsmaxwell.diaries.response.handlers.GetPages;
 import com.rsmaxwell.diaries.response.handlers.Quit;
 import com.rsmaxwell.diaries.response.handlers.Register;
 import com.rsmaxwell.diaries.response.handlers.Signin;
+import com.rsmaxwell.diaries.response.repository.DiaryRepository;
+import com.rsmaxwell.diaries.response.repositoryImpl.DiaryRepositoryImpl;
 import com.rsmaxwell.diaries.response.utilities.DiaryContext;
 import com.rsmaxwell.diaries.response.utilities.GetEntityManager;
 import com.rsmaxwell.mqtt.rpc.response.MessageHandler;
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
 public class Responder {
@@ -44,18 +52,38 @@ public class Responder {
 		messageHandler.putHandler("quit", new Quit());
 	}
 
+	static Option createOption(String shortName, String longName, String argName, String description, boolean required) {
+		return Option.builder(shortName).longOpt(longName).argName(argName).desc(description).hasArg().required(required).build();
+	}
+
 	public static void main(String[] args) throws Exception {
 
-		Config config = Config.read();
+		Option configOption = createOption("c", "config", "Configuration", "Configuration", true);
+
+		// @formatter:off
+		Options options = new Options();
+		options.addOption(configOption);
+		// @formatter:on
+
+		CommandLineParser commandLineParser = new DefaultParser();
+		CommandLine commandLine = commandLineParser.parse(options, args);
+
+		String filename = commandLine.getOptionValue("config");
+		Config config = Config.read(filename);
 		DbConfig dbConfig = config.getDb();
 		MqttConfig mqtt = config.getMqtt();
 		String server = mqtt.getServer();
 		User user = mqtt.getUser();
 
-		try (EntityManagerFactory entityManagerFactory = GetEntityManager.factory(dbConfig)) {
+		// @formatter:off
+		try (EntityManagerFactory entityManagerFactory = GetEntityManager.adminFactory(dbConfig); 
+			 EntityManager entityManager = entityManagerFactory.createEntityManager()) {
+			// @formatter:on
+
+			DiaryRepository diaryRepository = new DiaryRepositoryImpl(entityManager);
 
 			DiaryContext context = new DiaryContext();
-			context.setEntityManagerFactory(entityManagerFactory);
+			context.setDiaryRepository(diaryRepository);
 			context.setSecret(config.getSecret());
 			context.setDiaries(config.getDiaries());
 

@@ -223,4 +223,47 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 		}
 		return list;
 	}
+
+	@SuppressWarnings("unchecked")
+	public List<Object[]> getResultList(String sql) {
+		Query query = entityManager.createNativeQuery(sql);
+		return query.getResultList();
+	}
+
+	public Optional<T> findByField(String fieldName, String fieldValue) {
+
+		List<T> list = new ArrayList<T>();
+
+		StringBuffer sql = new StringBuffer();
+		sql.append("select ");
+		sql.append(getPrimaryKeyField());
+
+		for (String field : getFields()) {
+			sql.append(", ");
+			sql.append(field);
+		}
+
+		sql.append(" from ");
+		sql.append(getTable());
+		sql.append(" where ");
+		sql.append(fieldName);
+		sql.append(" = ");
+		sql.append("'");
+		sql.append(fieldValue);
+		sql.append("'");
+
+		List<Object[]> resultList = getResultList(sql.toString());
+
+		for (Object[] result : resultList) {
+			T x = getObjectFromResult(result);
+			list.add(x);
+		}
+
+		if (list.size() <= 0) {
+			return Optional.empty();
+		}
+
+		T item = list.get(0);
+		return Optional.of(item);
+	}
 }

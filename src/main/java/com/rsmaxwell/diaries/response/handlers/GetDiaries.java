@@ -1,7 +1,5 @@
 package com.rsmaxwell.diaries.response.handlers;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.diaries.response.model.Diary;
+import com.rsmaxwell.diaries.response.repository.DiaryRepository;
 import com.rsmaxwell.diaries.response.utilities.DiaryContext;
 import com.rsmaxwell.mqtt.rpc.common.Result;
 import com.rsmaxwell.mqtt.rpc.response.RequestHandler;
@@ -25,31 +24,17 @@ public class GetDiaries extends RequestHandler {
 
 		DiaryContext context = (DiaryContext) ctx;
 
-		String root = context.getDiaries().getPath();
-		File rootDir = new File(root);
+		DiaryRepository diaryRepository = context.getDiaryRepository();
 
-		File[] directories = rootDir.listFiles(new FilenameFilter() {
-
-			@Override
-			public boolean accept(File f, String name) {
-				if (!f.isDirectory()) {
-					return false;
-				}
-				if (!name.startsWith("diary")) {
-					return false;
-				}
-				return true;
-			}
-		});
-
-		List<Diary> list = new ArrayList<Diary>();
-		for (File dir : directories) {
-			list.add(new Diary(dir.getName()));
+		List<Diary> diaries = new ArrayList<Diary>();
+		Iterable<Diary> all = diaryRepository.findAll();
+		for (Diary diary : all) {
+			diaries.add(diary);
 		}
 
-		String json = mapper.writeValueAsString(list);
+		String json = mapper.writeValueAsString(diaries);
 		log.info(json);
 
-		return Result.success(list);
+		return Result.success(diaries);
 	}
 }

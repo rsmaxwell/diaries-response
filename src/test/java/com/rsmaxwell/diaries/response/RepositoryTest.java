@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,10 +43,15 @@ public class RepositoryTest {
 
 	@BeforeAll
 	static void overallSetup() {
+
+		String home = System.getProperty("user.home");
+		Path filePath = Paths.get(home, ".diaries", "test.json");
+		String filename = filePath.toString();
+
 		try {
-			Config config = Config.read();
+			Config config = Config.read(filename);
 			DbConfig dbConfig = config.getDb();
-			entityManagerFactory = GetEntityManager.factory(dbConfig);
+			entityManagerFactory = GetEntityManager.adminFactory("test", dbConfig);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -233,18 +240,18 @@ public class RepositoryTest {
 		Diary x9 = output.get(1);
 
 		int count1 = 0;
-		List<String> paths = new ArrayList<String>();
+		List<Long> ids = new ArrayList<Long>();
 		Iterable<Diary> all = repository.findAll();
 		for (Diary p : all) {
-			Optional<Diary> y = repository.findById(p.getPath());
+			Optional<Diary> y = repository.findById(p.getId());
 
 			assertNotNull(y.isPresent());
 			Diary p2 = y.get();
 
-			assertEquals(p.getPath(), p2.getPath());
+			assertEquals(p.getId(), p2.getId());
 			assertTrue(p.equals(p2));
 
-			paths.add(p.getPath());
+			ids.add(p.getId());
 			count1++;
 		}
 
@@ -252,14 +259,14 @@ public class RepositoryTest {
 		assertEquals(count1, repository.count());
 
 		int count2 = 0;
-		Iterable<Diary> more = repository.findAllById(paths);
+		Iterable<Diary> more = repository.findAllById(ids);
 		for (Diary p : more) {
-			Optional<Diary> y = repository.findById(p.getPath());
+			Optional<Diary> y = repository.findById(p.getId());
 
 			assertNotNull(y.isPresent());
 			Diary p2 = y.get();
 
-			assertEquals(p.getPath(), p2.getPath());
+			assertEquals(p.getId(), p2.getId());
 			assertTrue(p.equals(p2));
 			count2++;
 		}
@@ -267,47 +274,47 @@ public class RepositoryTest {
 		assertEquals(count2, 10);
 
 		assertEquals(repository.count(), 10);
-		assertTrue(repository.existsById(x0.getPath()));
-		repository.deleteById(x0.getPath());
-		assertFalse(repository.existsById(x0.getPath()));
+		assertTrue(repository.existsById(x0.getId()));
+		repository.deleteById(x0.getId());
+		assertFalse(repository.existsById(x0.getId()));
 		assertEquals(repository.count(), 9);
 
-		assertTrue(repository.existsById(x1.getPath()));
+		assertTrue(repository.existsById(x1.getId()));
 		repository.delete(x1);
-		assertFalse(repository.existsById(x1.getPath()));
+		assertFalse(repository.existsById(x1.getId()));
 		assertEquals(repository.count(), 8);
 
 		List<Diary> entities = new ArrayList<Diary>();
 		entities.add(x2);
 		entities.add(x3);
 
-		assertTrue(repository.existsById(x2.getPath()));
-		assertTrue(repository.existsById(x3.getPath()));
+		assertTrue(repository.existsById(x2.getId()));
+		assertTrue(repository.existsById(x3.getId()));
 		repository.deleteAll(entities);
-		assertFalse(repository.existsById(x2.getPath()));
-		assertFalse(repository.existsById(x3.getPath()));
+		assertFalse(repository.existsById(x2.getId()));
+		assertFalse(repository.existsById(x3.getId()));
 		assertEquals(repository.count(), 6);
 
-		List<String> listOfIds = new ArrayList<String>();
-		listOfIds.add(x4.getPath());
-		listOfIds.add(x5.getPath());
+		List<Long> listOfIds = new ArrayList<Long>();
+		listOfIds.add(x4.getId());
+		listOfIds.add(x5.getId());
 
-		assertTrue(repository.existsById(x4.getPath()));
-		assertTrue(repository.existsById(x5.getPath()));
+		assertTrue(repository.existsById(x4.getId()));
+		assertTrue(repository.existsById(x5.getId()));
 		repository.deleteAllById(listOfIds);
-		assertFalse(repository.existsById(x4.getPath()));
-		assertFalse(repository.existsById(x5.getPath()));
+		assertFalse(repository.existsById(x4.getId()));
+		assertFalse(repository.existsById(x5.getId()));
 		assertEquals(repository.count(), 4);
 
 		List<Diary> listOfEntities = new ArrayList<Diary>();
 		listOfEntities.add(x6);
 		listOfEntities.add(x7);
 
-		assertTrue(repository.existsById(x6.getPath()));
-		assertTrue(repository.existsById(x7.getPath()));
+		assertTrue(repository.existsById(x6.getId()));
+		assertTrue(repository.existsById(x7.getId()));
 		repository.deleteAll(listOfEntities);
-		assertFalse(repository.existsById(x6.getPath()));
-		assertFalse(repository.existsById(x7.getPath()));
+		assertFalse(repository.existsById(x6.getId()));
+		assertFalse(repository.existsById(x7.getId()));
 		assertEquals(repository.count(), 2);
 
 		repository.deleteAll();

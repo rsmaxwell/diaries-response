@@ -2,6 +2,7 @@ package com.rsmaxwell.diaries.response.repositoryImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.rsmaxwell.diaries.response.model.Role;
 import com.rsmaxwell.diaries.response.repository.RoleRepository;
@@ -56,5 +57,9 @@ public class RoleRepositoryImpl extends AbstractCrudRepository<Role, Long> imple
 		String name = (String) result[1];
 
 		return new Role(id, name);
+	}
+
+	public Optional<Role> findByName(String name) {
+		return findByField("name", name);
 	}
 }

@@ -36,5 +36,5 @@ for /R %SUBPROJECT_DIR%\runtime %%a in (*.jar) do (
 set CLASSPATH=%CLASSPATH%"
 
 set LOGGER_LEVEL=DEBUG
-java -classpath %CLASSPATH% com.rsmaxwell.diaries.response.PopulateDatabase
+java -classpath %CLASSPATH% com.rsmaxwell.diaries.response.PopulateDatabase --config C:\Users\Richard\.diaries\responder.json
 

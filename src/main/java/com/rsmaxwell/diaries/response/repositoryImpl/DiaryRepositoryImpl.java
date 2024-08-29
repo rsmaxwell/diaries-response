@@ -2,13 +2,14 @@ package com.rsmaxwell.diaries.response.repositoryImpl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.rsmaxwell.diaries.response.model.Diary;
 import com.rsmaxwell.diaries.response.repository.DiaryRepository;
 
 import jakarta.persistence.EntityManager;
 
-public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, String> implements DiaryRepository {
+public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> implements DiaryRepository {
 
 	public DiaryRepositoryImpl(EntityManager entityManager) {
 		super(entityManager);
@@ -19,19 +20,19 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, String> i
 	}
 
 	public String getPrimaryKeyField() {
-		return "path";
+		return "id";
 	}
 
 	public <S extends Diary> String getPrimaryKeyValueAsString(S entity) {
-		return entity.getPath();
+		return entity.getId().toString();
 	}
 
-	public String convertPrimaryKeyValueToString(String id) {
-		return id;
+	public String convertPrimaryKeyValueToString(Long id) {
+		return id.toString();
 	}
 
 	public <S extends Diary> void setPrimaryKeyValue(S entity, Object value) {
-		entity.setPath((String) value);
+		entity.setId((Long) value);
 	}
 
 	public List<String> getFields() {
@@ -48,12 +49,17 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, String> i
 
 	public Diary getObjectFromResult(Object[] result) {
 
-		if (result.length < 1) {
+		if (result.length < 2) {
 			throw new RuntimeException(String.format("Unexpected size of results: %d", result.length));
 		}
 
-		String path = (String) result[0];
+		Long id = ((Number) result[0]).longValue();
+		String path = (String) result[1];
 
-		return new Diary(path);
+		return new Diary(id, path);
+	}
+
+	public Optional<Diary> findByPath(String path) {
+		return findByField("path", path);
 	}
 }

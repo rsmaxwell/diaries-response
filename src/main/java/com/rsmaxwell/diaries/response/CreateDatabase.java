@@ -2,6 +2,11 @@ package com.rsmaxwell.diaries.response;
 
 import java.sql.Connection;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,9 +18,24 @@ public class CreateDatabase {
 
 	private static final Logger log = LogManager.getLogger(CreateDatabase.class);
 
+	static Option createOption(String shortName, String longName, String argName, String description, boolean required) {
+		return Option.builder(shortName).longOpt(longName).argName(argName).desc(description).hasArg().required(required).build();
+	}
+
 	public static void main(String[] args) throws Exception {
 
-		Config config = Config.read();
+		Option configOption = createOption("c", "config", "Configuration", "Configuration", true);
+
+		// @formatter:off
+		Options options = new Options();
+		options.addOption(configOption);
+		// @formatter:on
+
+		CommandLineParser commandLineParser = new DefaultParser();
+		CommandLine commandLine = commandLineParser.parse(options, args);
+
+		String filename = commandLine.getOptionValue("config");
+		Config config = Config.read(filename);
 		DbConfig dbConfig = config.getDb();
 		String database = dbConfig.getDatabase();
 

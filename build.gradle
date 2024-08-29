@@ -22,6 +22,7 @@ dependencies {
 	compileOnly libs.lombok
 	annotationProcessor libs.lombok
 
+    implementation libs.commons.cli
     runtimeOnly libs.postgresql
     implementation libs.org.eclipse.paho.mqttv5.client
     implementation libs.jbcrypt
