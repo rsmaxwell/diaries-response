@@ -123,7 +123,7 @@ public class PopulateDatabase {
 
 		Iterable<Diary> diaries = diaryRepository.findAll();
 		for (Diary diary : diaries) {
-			String name = diary.getPath();
+			String name = diary.getName();
 			Path path = Paths.get(original, name);
 
 			log.info(String.format("%s", name));

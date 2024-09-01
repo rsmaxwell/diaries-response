@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Optional;
 
 import com.rsmaxwell.diaries.response.model.Diary;
-import com.rsmaxwell.diaries.response.repository.DiaryRepository;
+import com.rsmaxwell.diaries.response.model.Page;
+import com.rsmaxwell.diaries.response.repository.PageRepository;
 
 import jakarta.persistence.EntityManager;
 
-public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> implements DiaryRepository {
+public class PageRepositoryImpl extends AbstractCrudRepository<Page, Long> implements PageRepository {
 
-	public DiaryRepositoryImpl(EntityManager entityManager) {
+	public PageRepositoryImpl(EntityManager entityManager) {
 		super(entityManager);
 	}
 
@@ -23,7 +24,7 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> imp
 		return "id";
 	}
 
-	public <S extends Diary> String getPrimaryKeyValueAsString(S entity) {
+	public <S extends Page> String getPrimaryKeyValueAsString(S entity) {
 		return entity.getId().toString();
 	}
 
@@ -31,7 +32,7 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> imp
 		return id.toString();
 	}
 
-	public <S extends Diary> void setPrimaryKeyValue(S entity, Object value) {
+	public <S extends Page> void setPrimaryKeyValue(S entity, Object value) {
 		entity.setId((Long) value);
 	}
 
@@ -41,25 +42,26 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> imp
 		return list;
 	}
 
-	public <S extends Diary> List<String> getValues(S entity) {
+	public <S extends Page> List<String> getValues(S entity) {
 		List<String> list = new ArrayList<String>();
 		list.add(entity.getName());
 		return list;
 	}
 
-	public Diary getObjectFromResult(Object[] result) {
+	public Page getObjectFromResult(Object[] result) {
 
 		if (result.length < 2) {
 			throw new RuntimeException(String.format("Unexpected size of results: %d", result.length));
 		}
 
 		Long id = ((Number) result[0]).longValue();
-		String name = (String) result[1];
+		Diary diary = (Diary) result[1];
+		String name = (String) result[2];
 
-		return new Diary(id, name);
+		return new Page(id, diary, name);
 	}
 
-	public Optional<Diary> findByPath(String path) {
+	public Optional<Page> findByPath(String path) {
 		return findByField("path", path);
 	}
 }
