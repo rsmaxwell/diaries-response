@@ -6,10 +6,11 @@ import java.util.Optional;
 
 import com.rsmaxwell.diaries.response.model.Role;
 import com.rsmaxwell.diaries.response.repository.RoleRepository;
+import com.rsmaxwell.diaries.response.utilities.WhereBuilder;
 
 import jakarta.persistence.EntityManager;
 
-public class RoleRepositoryImpl extends AbstractCrudRepository<Role, Long> implements RoleRepository {
+public class RoleRepositoryImpl extends AbstractCrudRepository<Role, Role, Long> implements RoleRepository {
 
 	public RoleRepositoryImpl(EntityManager entityManager) {
 		super(entityManager);
@@ -41,25 +42,38 @@ public class RoleRepositoryImpl extends AbstractCrudRepository<Role, Long> imple
 		return list;
 	}
 
-	public <S extends Role> List<String> getValues(S entity) {
+	public List<String> getDTOFields() {
 		List<String> list = new ArrayList<String>();
+		list.add("id");
+		list.add("name");
+		return list;
+	}
+
+	public <S extends Role> List<Object> getValues(S entity) {
+		List<Object> list = new ArrayList<Object>();
 		list.add(entity.getName());
 		return list;
 	}
 
-	public Role getObjectFromResult(Object[] result) {
-
-		if (result.length < 2) {
-			throw new RuntimeException(String.format("Unexpected size of results: %d", result.length));
-		}
-
+	public Role newDTO(Object[] result) {
 		Long id = ((Number) result[0]).longValue();
 		String name = (String) result[1];
-
 		return new Role(id, name);
 	}
 
 	public Optional<Role> findByName(String name) {
-		return findByField("name", name);
+
+		// @formatter:off
+		String where = new WhereBuilder()
+				.add("name", name)
+				.build();
+		// @formatter:on
+
+		List<Role> list = new ArrayList<Role>();
+		for (Role x : find(where)) {
+			list.add(x);
+		}
+
+		return singleItem(list);
 	}
 }

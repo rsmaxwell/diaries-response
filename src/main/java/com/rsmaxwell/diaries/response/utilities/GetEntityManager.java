@@ -12,7 +12,7 @@ import com.rsmaxwell.diaries.common.config.DbConfig;
 import com.rsmaxwell.diaries.common.config.Jdbc;
 import com.rsmaxwell.diaries.common.config.User;
 import com.rsmaxwell.diaries.response.model.Diary;
-import com.rsmaxwell.diaries.response.model.Image;
+import com.rsmaxwell.diaries.response.model.Page;
 import com.rsmaxwell.diaries.response.model.Person;
 import com.rsmaxwell.diaries.response.model.Role;
 
@@ -107,7 +107,7 @@ public class GetEntityManager {
 
 			PersistenceUnitInfoImpl info = new PersistenceUnitInfoImpl();
 			info.addClasses(Diary.class.getName());
-			info.addClasses(Image.class.getName());
+			info.addClasses(Page.class.getName());
 			info.addClasses(Person.class.getName());
 			info.addClasses(Role.class.getName());
 

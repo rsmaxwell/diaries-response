@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import com.rsmaxwell.diaries.response.model.Role;
 
-public interface RoleRepository extends CrudRepository<Role, Long> {
+public interface RoleRepository extends CrudRepository<Role, Role, Long> {
 
 	Optional<Role> findByName(String name);
 

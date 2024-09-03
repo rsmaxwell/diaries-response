@@ -12,7 +12,7 @@ import com.rsmaxwell.diaries.response.repository.CrudRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 
-public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T, ID> {
+public abstract class AbstractCrudRepository<T, DTO, ID> implements CrudRepository<T, DTO, ID> {
 
 	private static final Logger log = LogManager.getLogger(AbstractCrudRepository.class);
 
@@ -34,9 +34,15 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 
 	abstract public List<String> getFields();
 
-	abstract public <S extends T> List<String> getValues(S entity);
+	abstract public List<String> getDTOFields();
 
-	abstract public T getObjectFromResult(Object[] result);
+	abstract public <S extends T> List<Object> getValues(S entity);
+
+	abstract public DTO newDTO(Object[] result);
+
+	public EntityManager getEntityManager() {
+		return entityManager;
+	}
 
 	public long count() {
 		String sql = String.format("select count(*) from %s", getTable());
@@ -89,15 +95,16 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 	}
 
 	@SuppressWarnings("unchecked")
-	public Iterable<T> findAll() {
+	public Iterable<DTO> findAll() {
 
 		StringBuffer sql = new StringBuffer();
 		sql.append("select ");
-		sql.append(getPrimaryKeyField());
 
-		for (String field : getFields()) {
-			sql.append(", ");
+		String seperator = "";
+		for (String field : getDTOFields()) {
+			sql.append(seperator);
 			sql.append(field);
+			seperator = ", ";
 		}
 
 		sql.append(" from ");
@@ -106,9 +113,9 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 		Query query = entityManager.createNativeQuery(sql.toString());
 		List<Object[]> resultList = query.getResultList();
 
-		List<T> list = new ArrayList<T>();
+		List<DTO> list = new ArrayList<DTO>();
 		for (Object[] result : resultList) {
-			T x = getObjectFromResult(result);
+			DTO x = newDTO(result);
 			list.add(x);
 		}
 
@@ -116,18 +123,19 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 	}
 
 	@SuppressWarnings("unchecked")
-	public Iterable<T> findAllById(Iterable<ID> ids) {
+	public Iterable<DTO> findById(Iterable<ID> ids) {
 
-		List<T> list = new ArrayList<T>();
+		List<DTO> list = new ArrayList<DTO>();
 		for (ID id : ids) {
 
 			StringBuffer sql = new StringBuffer();
 			sql.append("select ");
-			sql.append(getPrimaryKeyField());
 
-			for (String field : getFields()) {
-				sql.append(", ");
+			String seperator = "";
+			for (String field : getDTOFields()) {
+				sql.append(seperator);
 				sql.append(field);
+				seperator = ", ";
 			}
 
 			sql.append(" from ");
@@ -141,7 +149,7 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 			List<Object[]> resultList = query.getResultList();
 
 			for (Object[] result : resultList) {
-				T x = getObjectFromResult(result);
+				DTO x = newDTO(result);
 				list.add(x);
 			}
 		}
@@ -150,17 +158,18 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 	}
 
 	@SuppressWarnings("unchecked")
-	public Optional<T> findById(ID id) {
+	public Optional<DTO> findById(ID id) {
 
-		List<T> list = new ArrayList<T>();
+		List<DTO> list = new ArrayList<DTO>();
 
 		StringBuffer sql = new StringBuffer();
 		sql.append("select ");
-		sql.append(getPrimaryKeyField());
 
-		for (String field : getFields()) {
-			sql.append(", ");
+		String seperator = "";
+		for (String field : getDTOFields()) {
+			sql.append(seperator);
 			sql.append(field);
+			seperator = ", ";
 		}
 
 		sql.append(" from ");
@@ -174,19 +183,43 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 		List<Object[]> resultList = query.getResultList();
 
 		for (Object[] result : resultList) {
-			T x = getObjectFromResult(result);
+			DTO x = newDTO(result);
 			list.add(x);
 		}
 
-		if (list.size() <= 0) {
-			return Optional.empty();
-		}
-
-		T item = list.get(0);
-		return Optional.of(item);
+		return singleItem(list);
 	}
 
-	public <S extends T> S save(S entity) {
+	public Iterable<DTO> find(String where) {
+
+		List<DTO> list = new ArrayList<DTO>();
+
+		StringBuffer sql = new StringBuffer();
+		sql.append("select ");
+
+		String seperator = "";
+		for (String field : getDTOFields()) {
+			sql.append(seperator);
+			sql.append(field);
+			seperator = ", ";
+		}
+
+		sql.append(" from ");
+		sql.append(getTable());
+		sql.append(" where ");
+		sql.append(where);
+
+		List<Object[]> results = getResultList(sql.toString());
+
+		for (Object[] result : results) {
+			DTO x = newDTO(result);
+			list.add(x);
+		}
+
+		return list;
+	}
+
+	public <S extends T> S save(S entity) throws Exception {
 
 		String separator = "";
 		StringBuffer fieldsBuffer = new StringBuffer();
@@ -198,11 +231,9 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 
 		separator = "";
 		StringBuffer valuesBuffer = new StringBuffer();
-		for (String value : getValues(entity)) {
+		for (Object value : getValues(entity)) {
 			valuesBuffer.append(separator);
-			valuesBuffer.append("'");
-			valuesBuffer.append(value);
-			valuesBuffer.append("'");
+			valuesBuffer.append(quote(value));
 			separator = ", ";
 		}
 
@@ -216,7 +247,7 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 		return entity;
 	}
 
-	public <S extends T> Iterable<S> saveAll(Iterable<S> entities) {
+	public <S extends T> Iterable<S> saveAll(Iterable<S> entities) throws Exception {
 		List<S> list = new ArrayList<S>();
 		for (S entity : entities) {
 			list.add(save(entity));
@@ -230,40 +261,34 @@ public abstract class AbstractCrudRepository<T, ID> implements CrudRepository<T,
 		return query.getResultList();
 	}
 
-	public Optional<T> findByField(String fieldName, String fieldValue) {
-
-		List<T> list = new ArrayList<T>();
-
-		StringBuffer sql = new StringBuffer();
-		sql.append("select ");
-		sql.append(getPrimaryKeyField());
-
-		for (String field : getFields()) {
-			sql.append(", ");
-			sql.append(field);
-		}
-
-		sql.append(" from ");
-		sql.append(getTable());
-		sql.append(" where ");
-		sql.append(fieldName);
-		sql.append(" = ");
-		sql.append("'");
-		sql.append(fieldValue);
-		sql.append("'");
-
-		List<Object[]> resultList = getResultList(sql.toString());
-
-		for (Object[] result : resultList) {
-			T x = getObjectFromResult(result);
-			list.add(x);
-		}
+	public Optional<DTO> singleItem(List<DTO> list) {
 
 		if (list.size() <= 0) {
 			return Optional.empty();
 		}
 
-		T item = list.get(0);
+		DTO item = list.get(0);
 		return Optional.of(item);
+	}
+
+	public String quote(String value) {
+		StringBuffer sb = new StringBuffer();
+		sb.append("'");
+		sb.append(value);
+		sb.append("'");
+		return sb.toString();
+	}
+
+	public String quote(Long value) {
+		return value.toString();
+	}
+
+	public String quote(Object value) throws Exception {
+		if (value instanceof String) {
+			return quote((String) value);
+		} else if (value instanceof Long) {
+			return quote((Long) value);
+		}
+		throw new Exception(String.format("Unexpected type: %s", value.getClass().getSimpleName()));
 	}
 }

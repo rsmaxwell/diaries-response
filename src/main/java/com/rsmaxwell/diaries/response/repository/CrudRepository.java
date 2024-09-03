@@ -2,7 +2,7 @@ package com.rsmaxwell.diaries.response.repository;
 
 import java.util.Optional;
 
-public interface CrudRepository<T, ID> {
+public interface CrudRepository<T, DTO, ID> {
 
 	long count();
 
@@ -18,13 +18,15 @@ public interface CrudRepository<T, ID> {
 
 	boolean existsById(ID id);
 
-	Iterable<T> findAll();
+	Iterable<DTO> findAll();
 
-	Iterable<T> findAllById(Iterable<ID> ids);
+	Iterable<DTO> findById(Iterable<ID> ids);
 
-	Optional<T> findById(ID id);
+	Iterable<DTO> find(String wheree);
 
-	<S extends T> S save(S entity);
+	Optional<DTO> findById(ID id);
 
-	<S extends T> Iterable<S> saveAll(Iterable<S> entities);
+	<S extends T> S save(S entity) throws Exception;
+
+	<S extends T> Iterable<S> saveAll(Iterable<S> entities) throws Exception;
 }

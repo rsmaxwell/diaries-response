@@ -20,13 +20,18 @@ import org.junit.jupiter.api.Test;
 
 import com.rsmaxwell.diaries.common.config.Config;
 import com.rsmaxwell.diaries.common.config.DbConfig;
+import com.rsmaxwell.diaries.response.dto.PageDTO;
+import com.rsmaxwell.diaries.response.dto.PersonDTO;
 import com.rsmaxwell.diaries.response.model.Diary;
+import com.rsmaxwell.diaries.response.model.Page;
 import com.rsmaxwell.diaries.response.model.Person;
 import com.rsmaxwell.diaries.response.model.Role;
 import com.rsmaxwell.diaries.response.repository.DiaryRepository;
+import com.rsmaxwell.diaries.response.repository.PageRepository;
 import com.rsmaxwell.diaries.response.repository.PersonRepository;
 import com.rsmaxwell.diaries.response.repository.RoleRepository;
 import com.rsmaxwell.diaries.response.repositoryImpl.DiaryRepositoryImpl;
+import com.rsmaxwell.diaries.response.repositoryImpl.PageRepositoryImpl;
 import com.rsmaxwell.diaries.response.repositoryImpl.PersonRepositoryImpl;
 import com.rsmaxwell.diaries.response.repositoryImpl.RoleRepositoryImpl;
 import com.rsmaxwell.diaries.response.utilities.GetEntityManager;
@@ -99,7 +104,7 @@ public class RepositoryTest {
 
 	@SuppressWarnings("unused")
 	@Test
-	void testPersonRepository() {
+	void testPersonRepository() throws Exception {
 
 		PersonRepository repository = new PersonRepositoryImpl(entityManager);
 		repository.deleteAll();
@@ -129,12 +134,12 @@ public class RepositoryTest {
 
 		int count1 = 0;
 		List<Long> ids = new ArrayList<Long>();
-		Iterable<Person> all = repository.findAll();
-		for (Person p : all) {
-			Optional<Person> y = repository.findById(p.getId());
+		Iterable<PersonDTO> all = repository.findAll();
+		for (PersonDTO p : all) {
+			Optional<PersonDTO> y = repository.findById(p.getId());
 
 			assertNotNull(y.isPresent());
-			Person p2 = y.get();
+			PersonDTO p2 = y.get();
 
 			assertEquals(p.getId(), p2.getId());
 			assertTrue(p.equals(p2));
@@ -147,12 +152,12 @@ public class RepositoryTest {
 		assertEquals(count1, repository.count());
 
 		int count2 = 0;
-		Iterable<Person> more = repository.findAllById(ids);
-		for (Person p : more) {
-			Optional<Person> y = repository.findById(p.getId());
+		Iterable<PersonDTO> more = repository.findById(ids);
+		for (PersonDTO p : more) {
+			Optional<PersonDTO> y = repository.findById(p.getId());
 
 			assertNotNull(y.isPresent());
-			Person p2 = y.get();
+			PersonDTO p2 = y.get();
 
 			assertEquals(p.getId(), p2.getId());
 			assertTrue(p.equals(p2));
@@ -211,7 +216,7 @@ public class RepositoryTest {
 
 	@SuppressWarnings("unused")
 	@Test
-	void testDiaryRepository() {
+	void testDiaryRepository() throws Exception {
 
 		DiaryRepository repository = new DiaryRepositoryImpl(entityManager);
 		repository.deleteAll();
@@ -259,7 +264,7 @@ public class RepositoryTest {
 		assertEquals(count1, repository.count());
 
 		int count2 = 0;
-		Iterable<Diary> more = repository.findAllById(ids);
+		Iterable<Diary> more = repository.findById(ids);
 		for (Diary p : more) {
 			Optional<Diary> y = repository.findById(p.getId());
 
@@ -323,7 +328,55 @@ public class RepositoryTest {
 
 	@SuppressWarnings("unused")
 	@Test
-	void testRoleRepository() {
+	void testPageRepository() throws Exception {
+
+		PageRepository pageRepository = new PageRepositoryImpl(entityManager);
+		pageRepository.deleteAll();
+
+		DiaryRepository diaryRepository = new DiaryRepositoryImpl(entityManager);
+		diaryRepository.deleteAll();
+
+		Diary x0 = diaryRepository.save(new Diary("hardship"));
+		Diary x1 = diaryRepository.save(new Diary("horrorpoplar"));
+		Diary x2 = diaryRepository.save(new Diary("swarmbreath"));
+		assertEquals(3, diaryRepository.count());
+
+		Page y0 = pageRepository.save(new Page(x0, "structure"));
+		Page y1 = pageRepository.save(new Page(x0, "deficit"));
+		Page y2 = pageRepository.save(new Page(x0, "asset"));
+
+		Page y3 = pageRepository.save(new Page(x1, "intermediate"));
+		Page y4 = pageRepository.save(new Page(x1, "calendar"));
+		Page y5 = pageRepository.save(new Page(x1, "body"));
+
+		Page y6 = pageRepository.save(new Page(x2, "basin"));
+		Page y7 = pageRepository.save(new Page(x2, "deal"));
+		Page y8 = pageRepository.save(new Page(x2, "promotion"));
+		assertEquals(9, pageRepository.count());
+
+		Iterable<PageDTO> pages = pageRepository.findAllByDiary(x1);
+		List<PageDTO> list = new ArrayList<PageDTO>();
+		for (PageDTO page : pages) {
+			list.add(page);
+		}
+		assertEquals(3, list.size());
+
+		Optional<PageDTO> optionalPage1 = pageRepository.findByDiaryAndName(x1, "calendar");
+		assertTrue(optionalPage1.isPresent());
+
+		Optional<PageDTO> optionalPage2 = pageRepository.findByDiaryAndName(x1, "junk");
+		assertTrue(optionalPage2.isEmpty());
+
+		pageRepository.deleteAll();
+		assertEquals(pageRepository.count(), 0);
+
+		diaryRepository.deleteAll();
+		assertEquals(diaryRepository.count(), 0);
+	}
+
+	@SuppressWarnings("unused")
+	@Test
+	void testRoleRepository() throws Exception {
 
 		RoleRepository repository = new RoleRepositoryImpl(entityManager);
 		repository.deleteAll();
@@ -371,7 +424,7 @@ public class RepositoryTest {
 		assertEquals(count1, repository.count());
 
 		int count2 = 0;
-		Iterable<Role> more = repository.findAllById(ids);
+		Iterable<Role> more = repository.findById(ids);
 		for (Role p : more) {
 			Optional<Role> y = repository.findById(p.getId());
 

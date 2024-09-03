@@ -19,34 +19,39 @@ import org.apache.logging.log4j.Logger;
 
 import com.rsmaxwell.diaries.common.config.Config;
 import com.rsmaxwell.diaries.common.config.DbConfig;
-import com.rsmaxwell.diaries.common.config.Diaries;
+import com.rsmaxwell.diaries.common.config.DiariesConfig;
+import com.rsmaxwell.diaries.response.dto.PageDTO;
 import com.rsmaxwell.diaries.response.model.Diary;
+import com.rsmaxwell.diaries.response.model.Page;
 import com.rsmaxwell.diaries.response.model.Role;
 import com.rsmaxwell.diaries.response.repository.DiaryRepository;
+import com.rsmaxwell.diaries.response.repository.PageRepository;
 import com.rsmaxwell.diaries.response.repository.RoleRepository;
 import com.rsmaxwell.diaries.response.repositoryImpl.DiaryRepositoryImpl;
+import com.rsmaxwell.diaries.response.repositoryImpl.PageRepositoryImpl;
 import com.rsmaxwell.diaries.response.repositoryImpl.RoleRepositoryImpl;
-import com.rsmaxwell.diaries.response.template.GenerateSvg;
 import com.rsmaxwell.diaries.response.utilities.GetEntityManager;
-import com.rsmaxwell.diaries.response.utilities.RemoveFileExtension;
+import com.rsmaxwell.diaries.response.utilities.MyFileUtilities;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
-public class PopulateDatabase {
+public class SyncroniseDatabase {
 
-	private static final Logger log = LogManager.getLogger(PopulateDatabase.class);
+	private static final Logger log = LogManager.getLogger(SyncroniseDatabase.class);
 
+	private DiariesConfig diariesConfig;
 	private DiaryRepository diaryRepository;
+	private PageRepository pageRepository;
 	private RoleRepository roleRepository;
 
-	public PopulateDatabase(DiaryRepository diaryRepository, RoleRepository roleRepository) {
+	public SyncroniseDatabase(DiariesConfig diariesConfig, DiaryRepository diaryRepository, PageRepository pageRepository, RoleRepository roleRepository) {
+		this.diariesConfig = diariesConfig;
 		this.diaryRepository = diaryRepository;
+		this.pageRepository = pageRepository;
 		this.roleRepository = roleRepository;
 	}
-
-	static GenerateSvg generator;
 
 	static Option createOption(String shortName, String longName, String argName, String description, boolean required) {
 		return Option.builder(shortName).longOpt(longName).argName(argName).desc(description).hasArg().required(required).build();
@@ -67,9 +72,7 @@ public class PopulateDatabase {
 		String filename = commandLine.getOptionValue("config");
 		Config config = Config.read(filename);
 		DbConfig dbConfig = config.getDb();
-		Diaries diaries = config.getDiaries();
-
-		generator = new GenerateSvg();
+		DiariesConfig diariesConfig = config.getDiaries();
 
 		EntityTransaction tx = null;
 		// @formatter:off
@@ -78,14 +81,15 @@ public class PopulateDatabase {
 			// @formatter:on
 
 			DiaryRepository diaryRepository = new DiaryRepositoryImpl(entityManager);
+			PageRepository pageRepository = new PageRepositoryImpl(entityManager);
 			RoleRepository roleRepository = new RoleRepositoryImpl(entityManager);
-			PopulateDatabase p = new PopulateDatabase(diaryRepository, roleRepository);
+			SyncroniseDatabase p = new SyncroniseDatabase(diariesConfig, diaryRepository, pageRepository, roleRepository);
 
 			tx = entityManager.getTransaction();
 			tx.begin();
 
-			p.populateDiaries(diaries);
-			p.populateRoles();
+			p.synchroniseDiaries();
+			p.synchroniseRoles();
 
 			tx.commit();
 
@@ -100,14 +104,14 @@ public class PopulateDatabase {
 		}
 	}
 
-	public void populateDiaries(Diaries diariesConfig) throws Exception {
+	public void synchroniseDiaries() throws Exception {
 
 		log.info("Refresh the diaries");
 
 		String original = diariesConfig.getOriginal();
 		File originalDir = new File(original);
 
-		File[] diaryDirectories = originalDir.listFiles(new FilenameFilter() {
+		File[] diaryDirs = originalDir.listFiles(new FilenameFilter() {
 
 			@Override
 			public boolean accept(File f, String name) {
@@ -121,6 +125,7 @@ public class PopulateDatabase {
 			}
 		});
 
+		// Make sure every database Diary matches an original diary on the file system
 		Iterable<Diary> diaries = diaryRepository.findAll();
 		for (Diary diary : diaries) {
 			String name = diary.getName();
@@ -135,25 +140,47 @@ public class PopulateDatabase {
 			}
 		}
 
-		for (File diarydir : diaryDirectories) {
+		// Make sure there is a database Diary for each original diary on the file
+		// system
+		// Also synchronise the database pages with Pages on the file system
+		for (File diarydir : diaryDirs) {
 			String name = diarydir.getName();
-			Optional<Diary> optional = diaryRepository.findByPath(diarydir.getName());
+			Optional<Diary> optional = diaryRepository.findByName(diarydir.getName());
 
 			if (optional.isEmpty()) {
 				log.info(String.format("creating database Diary '%s' to correspond with the filesystem directory", name));
 				diaryRepository.save(new Diary(name));
 			}
 
-			populatePages(diariesConfig, diarydir);
+			synchronisePages(diariesConfig, diarydir);
 		}
 	}
 
-	public void populatePages(Diaries diariesConfig, File diaryDir) throws Exception {
+	public void synchronisePages(DiariesConfig diariesConfig, File diaryDir) throws Exception {
 
 		log.info("Refresh the pages");
 
-		String diaryName = diaryDir.getName();
+		String original = diariesConfig.getOriginal();
+		String diaryName = MyFileUtilities.removeExtension(diaryDir.getName());
 
+		Optional<Diary> optionalDiary = diaryRepository.findByName(diaryName);
+		if (optionalDiary.isEmpty()) {
+			throw new Exception(String.format("Diary '%s' not found in database"));
+		}
+		Diary diary = optionalDiary.get();
+
+		// Make sure every database Page matches an original image file
+		Iterable<PageDTO> pages = pageRepository.findAllByDiary(diary);
+		for (PageDTO page : pages) {
+			String pageName = page.getName();
+			File imageFile = Paths.get(original, diaryName, String.format("%s.jpg", pageName)).toFile();
+
+			if (!imageFile.exists()) {
+				throw new Exception(String.format("The database Page '%s/%s' does not match an original image file", diaryName, pageName));
+			}
+		}
+
+		// Find the names of the original image files for this diary
 		File[] imageFiles = diaryDir.listFiles(new FileFilter() {
 
 			@Override
@@ -175,38 +202,20 @@ public class PopulateDatabase {
 			}
 		});
 
-		String original = diariesConfig.getOriginal();
-		String working = diariesConfig.getWorking();
-
-		File workingDiaryDir = Paths.get(working, diaryName).toFile();
-		for (File pageDir : workingDiaryDir.listFiles()) {
-			String pageName = pageDir.getName() + ".jpg";
-			File imageFile = Paths.get(original, diaryName, pageName).toFile();
-
-			if (!imageFile.exists()) {
-				String message = String.format("The Page directory not found: '%s'", imageFile.getAbsolutePath());
-				log.info(message);
-				throw new Exception(message);
-			}
-		}
-
+		// Make sure there is a database Page for each original image file
 		for (File imageFile : imageFiles) {
-			String pageName = RemoveFileExtension.removeExtension(imageFile);
-			File workingPageDir = Paths.get(working, diaryName, pageName).toFile();
 
-			if (!workingPageDir.exists()) {
-				log.info(String.format("creating the Page directory: '%s'", workingPageDir.getAbsolutePath()));
-				workingPageDir.mkdirs();
-			}
+			String pageName = MyFileUtilities.removeExtension(imageFile.getName());
+			Optional<PageDTO> optionalPage = pageRepository.findByDiaryAndName(diary, pageName);
 
-			File svgFile = Paths.get(workingPageDir.getAbsolutePath(), "image.svg").toFile();
-			if (!svgFile.exists()) {
-				generator.generate(svgFile, imageFile);
+			if (optionalPage.isEmpty()) {
+				log.info(String.format("creating database Page '%s/%s' to match the filesystem directory", diaryName, pageName));
+				pageRepository.save(new Page(diary, pageName));
 			}
 		}
 	}
 
-	public void populateRoles() throws Exception {
+	public void synchroniseRoles() throws Exception {
 
 		log.info("Refresh the roles");
 

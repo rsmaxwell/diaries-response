@@ -11,11 +11,11 @@ import com.rsmaxwell.mqtt.rpc.response.RequestHandler;
 
 public class Calculator extends RequestHandler {
 
-	private static final Logger logger = LogManager.getLogger(Calculator.class);
+	private static final Logger log = LogManager.getLogger(Calculator.class);
 
 	@Override
 	public Result handleRequest(Object ctx, Map<String, Object> args) throws Exception {
-		logger.traceEntry();
+		log.traceEntry();
 
 		try {
 			String operation = Utilities.getString(args, "operation");
@@ -39,16 +39,16 @@ public class Calculator extends RequestHandler {
 				break;
 			default:
 				String text = String.format("Unexpected operation: %s", operation);
-				logger.info(text);
+				log.info(text);
 				throw new Exception(text);
 			}
 
 			return Result.success(value);
 		} catch (ArithmeticException e) {
-			logger.debug(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()));
+			log.debug(String.format("%s: %s", e.getClass().getSimpleName(), e.getMessage()));
 			return Result.badRequestException(e);
 		} catch (Exception e) {
-			logger.catching(e);
+			log.catching(e);
 			return Result.badRequestException(e);
 		}
 	}

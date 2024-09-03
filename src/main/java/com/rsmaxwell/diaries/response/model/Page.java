@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Entity
-@Table(name = "page")
+@Table(name = "page", uniqueConstraints = { @UniqueConstraint(columnNames = { "diary_id", "name" }) })
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
@@ -25,11 +26,11 @@ public class Page {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@NonNull
 	@ManyToOne
 	@JoinColumn(name = "diary_id")
 	private Diary diary;
 
 	@NonNull
 	private String name;
-
 }

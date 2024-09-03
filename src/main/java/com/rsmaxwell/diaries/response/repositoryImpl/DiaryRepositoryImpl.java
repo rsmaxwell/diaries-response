@@ -6,10 +6,11 @@ import java.util.Optional;
 
 import com.rsmaxwell.diaries.response.model.Diary;
 import com.rsmaxwell.diaries.response.repository.DiaryRepository;
+import com.rsmaxwell.diaries.response.utilities.WhereBuilder;
 
 import jakarta.persistence.EntityManager;
 
-public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> implements DiaryRepository {
+public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Diary, Long> implements DiaryRepository {
 
 	public DiaryRepositoryImpl(EntityManager entityManager) {
 		super(entityManager);
@@ -17,10 +18,6 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> imp
 
 	public String getTable() {
 		return "diary";
-	}
-
-	public String getPrimaryKeyField() {
-		return "id";
 	}
 
 	public <S extends Diary> String getPrimaryKeyValueAsString(S entity) {
@@ -35,31 +32,48 @@ public class DiaryRepositoryImpl extends AbstractCrudRepository<Diary, Long> imp
 		entity.setId((Long) value);
 	}
 
+	public String getPrimaryKeyField() {
+		return "id";
+	}
+
 	public List<String> getFields() {
 		List<String> list = new ArrayList<String>();
-		list.add("path");
+		list.add("name");
 		return list;
 	}
 
-	public <S extends Diary> List<String> getValues(S entity) {
+	public List<String> getDTOFields() {
 		List<String> list = new ArrayList<String>();
+		list.add("id");
+		list.add("name");
+		return list;
+	}
+
+	public <S extends Diary> List<Object> getValues(S entity) {
+		List<Object> list = new ArrayList<Object>();
 		list.add(entity.getName());
 		return list;
 	}
 
-	public Diary getObjectFromResult(Object[] result) {
-
-		if (result.length < 2) {
-			throw new RuntimeException(String.format("Unexpected size of results: %d", result.length));
-		}
-
+	public Diary newDTO(Object[] result) {
 		Long id = ((Number) result[0]).longValue();
 		String name = (String) result[1];
-
 		return new Diary(id, name);
 	}
 
-	public Optional<Diary> findByPath(String path) {
-		return findByField("path", path);
+	public Optional<Diary> findByName(String name) {
+
+		// @formatter:off
+		String where = new WhereBuilder()
+				.add("name", name)
+				.build();
+		// @formatter:on
+
+		List<Diary> list = new ArrayList<Diary>();
+		for (Diary x : find(where)) {
+			list.add(x);
+		}
+
+		return singleItem(list);
 	}
 }

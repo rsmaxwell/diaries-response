@@ -24,7 +24,9 @@ import com.rsmaxwell.diaries.response.handlers.Quit;
 import com.rsmaxwell.diaries.response.handlers.Register;
 import com.rsmaxwell.diaries.response.handlers.Signin;
 import com.rsmaxwell.diaries.response.repository.DiaryRepository;
+import com.rsmaxwell.diaries.response.repository.PageRepository;
 import com.rsmaxwell.diaries.response.repositoryImpl.DiaryRepositoryImpl;
+import com.rsmaxwell.diaries.response.repositoryImpl.PageRepositoryImpl;
 import com.rsmaxwell.diaries.response.utilities.DiaryContext;
 import com.rsmaxwell.diaries.response.utilities.GetEntityManager;
 import com.rsmaxwell.mqtt.rpc.response.MessageHandler;
@@ -81,9 +83,11 @@ public class Responder {
 			// @formatter:on
 
 			DiaryRepository diaryRepository = new DiaryRepositoryImpl(entityManager);
+			PageRepository pageRepository = new PageRepositoryImpl(entityManager);
 
 			DiaryContext context = new DiaryContext();
 			context.setDiaryRepository(diaryRepository);
+			context.setPageRepository(pageRepository);
 			context.setSecret(config.getSecret());
 			context.setDiaries(config.getDiaries());
 

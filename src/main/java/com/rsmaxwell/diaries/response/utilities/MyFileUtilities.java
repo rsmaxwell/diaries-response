@@ -2,7 +2,7 @@ package com.rsmaxwell.diaries.response.utilities;
 
 import java.io.File;
 
-public class RemoveFileExtension {
+public class MyFileUtilities {
 
 	public static String removeExtension(File f) {
 		return removeExtension(f.getName());

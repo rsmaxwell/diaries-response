@@ -35,6 +35,6 @@ public class GetDiaries extends RequestHandler {
 		String json = mapper.writeValueAsString(diaries);
 		log.info(json);
 
-		return Result.success(diaries);
+		return Result.success(json);
 	}
 }
