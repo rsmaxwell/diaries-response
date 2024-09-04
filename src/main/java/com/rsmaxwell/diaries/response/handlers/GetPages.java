@@ -39,7 +39,7 @@ public class GetPages extends RequestHandler {
 			String json = mapper.writeValueAsString(pages);
 			log.info(json);
 
-			return Result.success(json);
+			return Result.success(pages);
 
 		} catch (Exception e) {
 			log.catching(e);
