@@ -14,6 +14,7 @@ import com.rsmaxwell.diaries.response.utilities.DiaryContext;
 import com.rsmaxwell.mqtt.rpc.common.Result;
 import com.rsmaxwell.mqtt.rpc.common.Utilities;
 import com.rsmaxwell.mqtt.rpc.response.RequestHandler;
+import com.rsmaxwell.mqtt.rpc.utilities.BadRequest;
 
 public class GetPages extends RequestHandler {
 
@@ -27,7 +28,13 @@ public class GetPages extends RequestHandler {
 		try {
 			DiaryContext context = (DiaryContext) ctx;
 
-			Long diaryId = Utilities.getLong(args, "diary");
+			Long diaryId;
+			try {
+				diaryId = Utilities.getLong(args, "diary");
+			} catch (Exception e) {
+				throw new BadRequest(e.getMessage(), e);
+			}
+
 			PageRepository pageRepository = context.getPageRepository();
 
 			List<PageDTO> pages = new ArrayList<PageDTO>();
@@ -41,6 +48,8 @@ public class GetPages extends RequestHandler {
 
 			return Result.success(pages);
 
+		} catch (BadRequest e) {
+			return Result.badRequestException(e);
 		} catch (Exception e) {
 			log.catching(e);
 			return Result.badRequestException(e);

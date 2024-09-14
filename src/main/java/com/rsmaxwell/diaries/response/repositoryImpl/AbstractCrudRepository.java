@@ -271,23 +271,17 @@ public abstract class AbstractCrudRepository<T, DTO, ID> implements CrudReposito
 		return Optional.of(item);
 	}
 
-	public String quote(String value) {
-		StringBuffer sb = new StringBuffer();
-		sb.append("'");
-		sb.append(value);
-		sb.append("'");
-		return sb.toString();
-	}
-
-	public String quote(Long value) {
-		return value.toString();
-	}
-
 	public String quote(Object value) throws Exception {
 		if (value instanceof String) {
-			return quote((String) value);
-		} else if (value instanceof Long) {
-			return quote((Long) value);
+			StringBuffer sb = new StringBuffer();
+			sb.append("'");
+			sb.append(value);
+			sb.append("'");
+			return sb.toString();
+		} else if (value instanceof Number) {
+			StringBuffer sb = new StringBuffer();
+			sb.append(value);
+			return sb.toString();
 		}
 		throw new Exception(String.format("Unexpected type: %s", value.getClass().getSimpleName()));
 	}

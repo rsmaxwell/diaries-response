@@ -40,4 +40,20 @@ public class Person {
 	@NonNull
 	@Column(name = "lastName")
 	private String lastName;
+
+	@NonNull
+	@Column(name = "knownas")
+	private String knownas;
+
+	@NonNull
+	@Column(name = "email")
+	private String email;
+
+	@NonNull
+	@Column(name = "countryCode")
+	private Integer countryCode;
+
+	@NonNull
+	@Column(name = "nationalNumber")
+	private Long nationalNumber;
 }

@@ -109,19 +109,19 @@ public class RepositoryTest {
 		PersonRepository repository = new PersonRepositoryImpl(entityManager);
 		repository.deleteAll();
 
-		Person x0 = repository.save(new Person("007", "secrethash", "James", "Bond"));
-		Person x1 = repository.save(new Person("horrorpoplar", "maze", "Ayana", "Bush"));
-		Person x2 = repository.save(new Person("swarmbreath", "architect", "Frederick", "Costa"));
-		Person x3 = repository.save(new Person("sickowither", "direct", "Brian", "Villa"));
-		Person x4 = repository.save(new Person("pushprovision", "landowner", "Evelyn", "Benton"));
-		Person x5 = repository.save(new Person("fantasy", "quarter", "Jazlynn", "Collins"));
-		Person x6 = repository.save(new Person("shine", "conductor", "Sean", "Pierce"));
-		Person x7 = repository.save(new Person("indulge", "action", "Gisselle", "Moss"));
+		Person x0 = repository.save(new Person("007", "secrethash", "James", "Bond", "007", "bond@mi6.uk.gov", 44, 56220218978L));
+		Person x1 = repository.save(new Person("horrorpoplar", "maze", "Ayana", "Bush", "bob", "bobhorror@acer.com", 44, 54990891104L));
+		Person x2 = repository.save(new Person("swarmbreath", "architect", "Frederick", "Costa", "jill", "jgswarm@@london.edu.uk", 44, 12190125697L));
+		Person x3 = repository.save(new Person("sickowither", "direct", "Brian", "Villa", "greg", "gyobbo@os.co.uk", 44, 46431927722L));
+		Person x4 = repository.save(new Person("pushprovision", "landowner", "Evelyn", "Benton", "top", "beefsteak@waitrose.co.uk", 44, 50782257157L));
+		Person x5 = repository.save(new Person("fantasy", "quarter", "Jazlynn", "Collins", "toby", "thomashall@ntlworld.co.uk", 44, 53377002182L));
+		Person x6 = repository.save(new Person("shine", "conductor", "Sean", "Pierce", "sue", "qwerty@outlook.com", 44, 42326833933L));
+		Person x7 = repository.save(new Person("indulge", "action", "Gisselle", "Moss", "tom", "gross@hotmail.com", 44, 39906867554L));
 		assertEquals(8, repository.count());
 
 		List<Person> extra = new ArrayList<Person>();
-		extra.add(new Person("hemisphere", "horseshoe", "Cherish", "Nguyen"));
-		extra.add(new Person("judicial", "sigh", "Tianna ", "Meza"));
+		extra.add(new Person("hemisphere", "horseshoe", "Cherish", "Nguyen", "georgy", "george@hotmail.com", 44, 35598005196L));
+		extra.add(new Person("judicial", "sigh", "Tianna ", "Meza", "fred", "fredbloggs@vista.co.uk", 44, 35598005196L));
 
 		List<Person> output = new ArrayList<Person>();
 		Iterable<Person> result = repository.saveAll(extra);

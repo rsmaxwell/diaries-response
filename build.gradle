@@ -12,6 +12,10 @@ repositories {
     }
 }
 
+configurations {
+   testCompile
+}
+
 dependencies {
     testImplementation libs.junit.jupiter
     testRuntimeOnly libs.junit.platform.launcher
@@ -19,10 +23,15 @@ dependencies {
     implementation libs.log4j.core
     implementation libs.log4j.api
 
-	compileOnly libs.lombok
-	annotationProcessor libs.lombok
+    compileOnly libs.lombok
+    testImplementation libs.lombok
+    annotationProcessor libs.lombok
 
     implementation libs.commons.cli
+    implementation libs.commons.validator
+    implementation libs.libphonenumber
+    implementation libs.geocoder
+    implementation libs.carrier
     runtimeOnly libs.postgresql
     implementation libs.org.eclipse.paho.mqttv5.client
     implementation libs.jbcrypt
