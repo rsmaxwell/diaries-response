@@ -29,7 +29,7 @@ popd
 
 
 
-cd %SUBPROJECT%
+cd %SUBPROJECT_DIR%
 
 set PROJECT=diaries-response
 set GROUPID=com.rsmaxwell.diaries
