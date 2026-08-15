@@ -1,30 +1,94 @@
 @echo off
 setlocal
 
-set BASEDIR=%~dp0
+rem ============================================================================
+rem clean.bat
+rem
+rem Clean the Diaries responder Gradle build output and remove the locally
+rem copied runtime dependency directory.
+rem ============================================================================
 
-pushd %BASEDIR%
-set DEV_SCRIPT_DIR=%CD%
+
+rem ----------------------------------------------------------------------------
+rem Initialise common script variables.
+rem ----------------------------------------------------------------------------
+
+set "SCRIPT_DIR=%~dp0"
+set "EXIT_CODE=0"
+
+
+rem ----------------------------------------------------------------------------
+rem Locate the top-level Diaries project directory.
+rem ----------------------------------------------------------------------------
+
+pushd "%SCRIPT_DIR%..\..\.." >nul 2>&1
+if errorlevel 1 (
+    echo ERROR: Could not locate the Diaries project root. >&2
+    echo Script directory: "%SCRIPT_DIR%" >&2
+    endlocal & exit /b 1
+)
+
+set "PROJECT_DIR=%CD%"
+set "RESPONDER_DIR=%PROJECT_DIR%\diaries-responder"
+set "RUNTIME_DIR=%RESPONDER_DIR%\runtime"
+set "GRADLE_WRAPPER=%PROJECT_DIR%\gradlew.bat"
+
+
+rem ----------------------------------------------------------------------------
+rem Validate the paths required by this script.
+rem ----------------------------------------------------------------------------
+
+if not exist "%RESPONDER_DIR%" (
+    echo ERROR: Responder directory not found: "%RESPONDER_DIR%" >&2
+    set "EXIT_CODE=1"
+    goto :cleanup
+)
+
+if not exist "%GRADLE_WRAPPER%" (
+    echo ERROR: Gradle wrapper not found: "%GRADLE_WRAPPER%" >&2
+    set "EXIT_CODE=1"
+    goto :cleanup
+)
+
+
+rem ----------------------------------------------------------------------------
+rem Run the responder Gradle clean task.
+rem ----------------------------------------------------------------------------
+
+echo Cleaning Diaries responder...
+
+call "%GRADLE_WRAPPER%" :diaries-responder:clean
+set "EXIT_CODE=%ERRORLEVEL%"
+
+if not "%EXIT_CODE%"=="0" (
+    echo ERROR: Diaries responder Gradle clean failed with exit code %EXIT_CODE%. >&2
+    goto :cleanup
+)
+
+
+rem ----------------------------------------------------------------------------
+rem Remove the copied runtime dependencies.
+rem
+rem The runtime directory is produced separately by getDeps.bat and is outside
+rem Gradle's normal build directory, so remove it explicitly when present.
+rem ----------------------------------------------------------------------------
+
+if exist "%RUNTIME_DIR%" (
+    rmdir /s /q "%RUNTIME_DIR%"
+    if errorlevel 1 (
+        echo ERROR: Could not remove runtime directory: "%RUNTIME_DIR%" >&2
+        set "EXIT_CODE=1"
+        goto :cleanup
+    )
+)
+
+echo Diaries responder clean completed successfully.
+
+
+rem ----------------------------------------------------------------------------
+rem Common cleanup and exit.
+rem ----------------------------------------------------------------------------
+
+:cleanup
 popd
-
-pushd %DEV_SCRIPT_DIR%\..
-set SCRIPT_DIR=%CD%
-popd
-
-pushd %SCRIPT_DIR%\..
-set SUBPROJECT_DIR=%CD%
-popd
-
-pushd %SUBPROJECT_DIR%\..
-set PROJECT_DIR=%CD%
-popd
-
-
-
-
-cd %PROJECT_DIR%
-
-echo on
-call %PROJECT_DIR%\gradlew clean
-
-rd /S /Q %SUBPROJECT_DIR%\runtime
+endlocal & exit /b %EXIT_CODE%
