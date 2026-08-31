@@ -210,6 +210,7 @@ The built-in static file server listens on port `8081` and serves:
 The responder registers handlers for operations such as:
 
 ```text id="i86z9v"
+health
 register
 signin
 refreshToken
@@ -233,6 +234,20 @@ quit
 ```
 
 The client sends MQTT RPC messages to request these operations. The responder validates the request, performs any required database work, publishes retained state where appropriate, and replies to the client.
+
+The `health` operation is reserved for responder readiness checks. It does not require a Diaries access token, but Mosquitto authentication and the narrowly scoped `diaries-health` ACL protect its transport. A successful response contains only `{"status":"UP"}` and is returned only after a live `SELECT 1` probe succeeds using a separate short-lived `EntityManager`.
+
+## Responder readiness command
+
+The responder fat JAR contains a dedicated MQTT RPC health-check command:
+
+```text
+java -cp diaries-responder.jar com.rsmaxwell.diaries.responder.health.ResponderHealthCheck --config /config/responder.json
+```
+
+The command reads the MQTT broker host and port from the responder configuration and authenticates its short-lived requestor client with `DIARIES_MQTT_HEALTH_USERNAME` and `DIARIES_MQTT_HEALTH_PASSWORD`. It uses a unique MQTT client ID, subscribes to `diaries/rpc/<client-id>/response`, and exits 0 only after a correlated successful `health` response with an `UP` payload. The request/response transaction has an internal four-second deadline. Compose sets `loglevel=ERROR` only for the health-check subprocess so successful polling remains quiet while command failures still produce one concise standard-error line.
+
+Docker responder health checks use this command rather than the static HTTP server. This proves that the broker, normal long-lived responder listener and publisher, and database are usable together.
 
 ## Retained topic-tree model
 

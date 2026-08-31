@@ -25,12 +25,14 @@ import com.rsmaxwell.diaries.responder.repository.PageRepository;
 import com.rsmaxwell.diaries.responder.repository.PersonRepository;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 import lombok.Data;
 
 @Data
 public class DiaryContext {
 
+	private EntityManagerFactory entityManagerFactory;
 	private EntityManager entityManager;
 	private DiaryRepository diaryRepository;
 	private PageRepository pageRepository;
