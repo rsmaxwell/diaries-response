@@ -1,5 +1,7 @@
 package com.rsmaxwell.diaries.responder.model;
 
+import java.util.Objects;
+
 import com.rsmaxwell.mqtt.rpc.exceptions.RpcStatusException;
 
 import jakarta.persistence.Column;
@@ -30,7 +32,7 @@ public abstract class Base {
 	protected Long version = 0L;
 
 	public void checkAndIncrementVersion(Base other) throws Exception {
-		if (version != other.version) {
+		if (!Objects.equals(version, other.version)) {
 			throw RpcStatusException.badRequest(String.format("Stale update. incoming version: %d, original version: %d", version, other.version));
 		}
 

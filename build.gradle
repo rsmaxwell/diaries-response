@@ -394,6 +394,33 @@ application {
     mainClass = responderMainClass
 }
 
+/*
+ * The responder has enough runtime dependencies for the Windows start-script
+ * classpath to exceed cmd.exe's expanded command-line limit. All distribution
+ * JARs live directly under lib, so use Java's classpath wildcard instead of
+ * repeating %APP_HOME% once for every dependency.
+ */
+tasks.named('startScripts') {
+    doLast {
+        String originalScript = windowsScript.getText('UTF-8')
+        String wildcardClasspath = java.util.regex.Matcher.quoteReplacement(
+            'set CLASSPATH=%APP_HOME%\\lib\\*'
+        )
+        String shortenedScript = originalScript.replaceFirst(
+            '(?m)^set CLASSPATH=.*$',
+            wildcardClasspath
+        )
+
+        if (shortenedScript == originalScript) {
+            throw new GradleException(
+                'Unable to shorten the generated Windows responder classpath.'
+            )
+        }
+
+        windowsScript.write(shortenedScript, 'UTF-8')
+    }
+}
+
 tasks.named('jar') {
     archiveBaseName.set(projectArtifactId)
     archiveClassifier.set('')
@@ -464,9 +491,4 @@ tasks.withType(PublishToMavenRepository).configureEach {
             )
         }
     }
-}
-
-tasks.register('getDeps', Copy) {
-    from sourceSets.main.runtimeClasspath
-    into 'runtime/'
 }

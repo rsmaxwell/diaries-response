@@ -4,8 +4,7 @@ setlocal
 rem ============================================================================
 rem clean.bat
 rem
-rem Clean the Diaries responder Gradle build output and remove the locally
-rem copied runtime dependency directory.
+rem Clean the Diaries responder Gradle build output.
 rem ============================================================================
 
 
@@ -30,7 +29,6 @@ if errorlevel 1 (
 
 set "PROJECT_DIR=%CD%"
 set "RESPONDER_DIR=%PROJECT_DIR%\diaries-responder"
-set "RUNTIME_DIR=%RESPONDER_DIR%\runtime"
 set "GRADLE_WRAPPER=%PROJECT_DIR%\gradlew.bat"
 
 
@@ -63,23 +61,6 @@ set "EXIT_CODE=%ERRORLEVEL%"
 if not "%EXIT_CODE%"=="0" (
     echo ERROR: Diaries responder Gradle clean failed with exit code %EXIT_CODE%. >&2
     goto :cleanup
-)
-
-
-rem ----------------------------------------------------------------------------
-rem Remove the copied runtime dependencies.
-rem
-rem The runtime directory is produced separately by getDeps.bat and is outside
-rem Gradle's normal build directory, so remove it explicitly when present.
-rem ----------------------------------------------------------------------------
-
-if exist "%RUNTIME_DIR%" (
-    rmdir /s /q "%RUNTIME_DIR%"
-    if errorlevel 1 (
-        echo ERROR: Could not remove runtime directory: "%RUNTIME_DIR%" >&2
-        set "EXIT_CODE=1"
-        goto :cleanup
-    )
 )
 
 echo Diaries responder clean completed successfully.

@@ -5,6 +5,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.query.MutationQuery;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.rsmaxwell.diaries.responder.dto.FragmentDBDTO;
 import com.rsmaxwell.diaries.responder.model.Fragment;
 import com.rsmaxwell.diaries.responder.model.LockInfo;
@@ -15,6 +19,8 @@ import com.rsmaxwell.diaries.responder.utilities.WhereBuilder;
 import jakarta.persistence.EntityManager;
 
 public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, FragmentDBDTO, Long> implements FragmentRepository {
+
+	private static final Logger log = LoggerFactory.getLogger(FragmentRepositoryImpl.class);
 
 	public FragmentRepositoryImpl(EntityManager entityManager) {
 		super(entityManager);
@@ -140,6 +146,26 @@ public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, Fra
 		// @formatter:on
 
 		return find(where);
+	}
+
+	@Override
+	public int updateSequence(Long id, Long expectedVersion, BigDecimal sequence) {
+		String sql = """
+				update fragment
+				set sequence = :sequence,
+				    version = version + 1
+				where id = :id
+				  and version = :expectedVersion
+				""";
+
+		MutationQuery query = getSession().createNativeMutationQuery(sql);
+		query.setParameter("sequence", sequence);
+		query.setParameter("id", id);
+		query.setParameter("expectedVersion", expectedVersion);
+
+		int count = query.executeUpdate();
+		log.info("updateSequence --> count: {}", count);
+		return count;
 	}
 
 	@Override

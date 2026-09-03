@@ -1,27 +1,19 @@
 package com.rsmaxwell.diaries.responder.handlers;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import org.eclipse.paho.mqttv5.client.MqttAsyncClient;
 import org.eclipse.paho.mqttv5.common.packet.UserProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rsmaxwell.diaries.responder.dto.FragmentDBDTO;
-import com.rsmaxwell.diaries.responder.dto.FragmentPublishDTO;
-import com.rsmaxwell.diaries.responder.dto.MarqueeDBDTO;
 import com.rsmaxwell.diaries.responder.model.Fragment;
-import com.rsmaxwell.diaries.responder.model.Marquee;
 import com.rsmaxwell.diaries.responder.model.Role;
 import com.rsmaxwell.diaries.responder.repository.FragmentRepository;
-import com.rsmaxwell.diaries.responder.repository.MarqueeRepository;
 import com.rsmaxwell.diaries.responder.utilities.Authorization;
 import com.rsmaxwell.diaries.responder.utilities.DiaryContext;
+import com.rsmaxwell.diaries.responder.utilities.FragmentSequenceNormaliser;
 import com.rsmaxwell.mqtt.rpc.common.Response;
 import com.rsmaxwell.mqtt.rpc.common.Utilities;
 import com.rsmaxwell.mqtt.rpc.exceptions.RpcStatusException;
@@ -48,9 +40,7 @@ public class NormaliseFragments extends RequestHandler {
 		Authorization.checkRoleAtLeast(claims, Role.EDITOR);
 		log.info("NormaliseFragments.handleRequest: Authorization.check: OK!");
 
-		MqttAsyncClient client = context.getPublisherClient();
 		FragmentRepository fragmentRepository = context.getFragmentRepository();
-		MarqueeRepository marqueeRepository = context.getMarqueeRepository();
 
 		log.info("NormaliseFragments.handleRequest: get the date arguments");
 
@@ -70,58 +60,21 @@ public class NormaliseFragments extends RequestHandler {
 		EntityManager em = context.getEntityManager();
 		EntityTransaction tx = em.getTransaction();
 
-		List<Fragment> updates = new ArrayList<>();
-
-		BigDecimal sequence = new BigDecimal("1.0000");
-		BigDecimal increment = new BigDecimal("1.0000");
+		List<Fragment> updates;
 
 		tx.begin();
 		try {
-			for (FragmentDBDTO fragmentDTO : fragmentRepository.findAllByDate(year, month, day)) {
-				BigDecimal currentSeq = fragmentDTO.getSequence();
-
-				if (currentSeq != null && currentSeq.compareTo(sequence) == 0) {
-					// log.info(String.format("fragment id:%d, already has correct sequence number: %s", fragmentDTO.getId(), sequence.toPlainString()));
-				} else {
-					String currentSeqStr = (currentSeq != null) ? currentSeq.toPlainString() : "null";
-					log.info(String.format("Updating fragment id: %d, sequence: %s -> %s", fragmentDTO.getId(), currentSeqStr, sequence.toPlainString()));
-
-					Fragment fragment = context.inflateFragment(fragmentDTO);
-
-					fragment.setSequence(sequence);
-					fragment.incrementVersion();
-					fragmentRepository.update(fragment);
-					updates.add(fragment);
-				}
-
-				sequence = sequence.add(increment);
-			}
+			updates = FragmentSequenceNormaliser.normaliseDate(fragmentRepository, year, month, day);
 			tx.commit();
 
 		} catch (Exception ex) {
-			tx.rollback();
+			if (tx.isActive()) {
+				tx.rollback();
+			}
 			throw ex;
 		}
 
-		// Publish the updates
-		for (Fragment fragment : updates) {
-			// @formatter:off
-			log.info(String.format("Publishing fragment %d:%d:%d - %d --> sequence: %s",
-					fragment.getYear(), fragment.getMonth(), fragment.getDay(), fragment.getId(),
-					fragment.getSequence().toPlainString()));
-			// @formatter:on
-
-			Optional<MarqueeDBDTO> optionalMarqueeDTO = marqueeRepository.findByFragmentId(fragment.getId());
-			MarqueeDBDTO marqueeDTO = null;
-			if (optionalMarqueeDTO.isPresent()) {
-				marqueeDTO = optionalMarqueeDTO.get();
-			}
-
-			Marquee marquee = context.inflateMarquee(marqueeDTO);
-			FragmentPublishDTO fragmentPublishDTO = new FragmentPublishDTO(fragment, marquee);
-
-			fragmentPublishDTO.publish(client);
-		}
+		FragmentSequenceNormaliser.publish(context, updates);
 
 		return Response.success(updates.size());
 	}

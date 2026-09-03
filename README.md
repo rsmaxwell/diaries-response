@@ -94,10 +94,11 @@ The normal build also creates a Shadow/fat JAR.
 ../gradlew build
 ../gradlew test
 ../gradlew shadowJar
-../gradlew getDeps
+../gradlew installDist
 ```
 
-The `getDeps` task copies runtime dependencies into the `runtime/` directory.
+The `installDist` task creates the application launcher and its runtime libraries
+under `build/install/diaries-responder/`.
 
 ## Run
 

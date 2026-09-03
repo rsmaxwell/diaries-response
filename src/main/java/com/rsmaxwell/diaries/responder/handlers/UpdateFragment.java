@@ -1,6 +1,7 @@
 package com.rsmaxwell.diaries.responder.handlers;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import com.rsmaxwell.diaries.responder.utilities.Authorization;
 import com.rsmaxwell.diaries.responder.utilities.DiaryContext;
 import com.rsmaxwell.diaries.responder.utilities.FragmentAndMarquee;
 import com.rsmaxwell.diaries.responder.utilities.FragmentLocking;
+import com.rsmaxwell.diaries.responder.utilities.FragmentSequenceNormaliser;
 import com.rsmaxwell.diaries.responder.utilities.SequenceNumber;
 import com.rsmaxwell.mqtt.rpc.common.Response;
 import com.rsmaxwell.mqtt.rpc.common.Utilities;
@@ -54,6 +56,7 @@ public class UpdateFragment extends RequestHandler {
 
 		Fragment incomingFragment;
 		Fragment originalFragment;
+		List<Fragment> normalisedFragments;
 
 		tx.begin();
 		try {
@@ -99,6 +102,13 @@ public class UpdateFragment extends RequestHandler {
 				log.info("UpdateFragment.handleRequest: number of records updated: {}", count);
 			}
 
+			// Normalise every affected date in the same transaction. This covers both a
+			// date change and a sequence-only drag-and-drop reorder.
+			normalisedFragments = FragmentSequenceNormaliser.normaliseAffectedDates(
+					fragmentRepository,
+					originalFragment,
+					incomingFragment);
+
 			tx.commit();
 
 			/*
@@ -131,10 +141,16 @@ public class UpdateFragment extends RequestHandler {
 			dto.remove(client);
 		}
 
-		// (9) publish the Fragment to the topic tree
-		log.info("UpdateFragment.handleRequest: publishing the incoming fragment to the TopicTree");
-		FragmentPublishDTO dto = new FragmentPublishDTO(incomingFragment, fragmentAndMarquee.getMarquee());
-		dto.publish(client);
+		// (9) publish the final incoming fragment and every fragment renumbered on
+		// either date. De-duplicate by id because the incoming fragment may itself
+		// have been renumbered.
+		Map<Long, Fragment> fragmentsToPublish = new LinkedHashMap<>();
+		for (Fragment fragment : normalisedFragments) {
+			fragmentsToPublish.put(fragment.getId(), fragment);
+		}
+		fragmentsToPublish.put(incomingFragment.getId(), incomingFragment);
+		log.info("UpdateFragment.handleRequest: publishing {} affected fragment(s) to the TopicTree", fragmentsToPublish.size());
+		FragmentSequenceNormaliser.publish(context, fragmentsToPublish.values());
 
 		return Response.success(incomingFragment.getId());
 	}
