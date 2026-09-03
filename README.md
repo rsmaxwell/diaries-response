@@ -87,6 +87,20 @@ gradlew.bat :diaries-responder:build
 
 The normal build also creates a Shadow/fat JAR.
 
+### Local Docker image
+
+The responder owns the multi-stage `Dockerfile` used by the
+`local-docker-build` mode. Because the Gradle wrapper and shared build files
+belong to the parent project, build it from the top-level `diaries` directory:
+
+```bash
+docker build -f diaries-responder/Dockerfile -t diaries-responder:local .
+```
+
+`compose.local-docker-build.yaml` uses the same Dockerfile and parent build
+context. The production pipeline continues to use its runtime-only image recipe
+for packaging an already published responder artifact.
+
 ## Useful Gradle commands
 
 ```bash id="ifm5rs"

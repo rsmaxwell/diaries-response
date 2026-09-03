@@ -1,0 +1,11 @@
+**
+!gradlew
+!settings.gradle
+!build.gradle
+!gradle/
+!gradle/**
+!diaries-responder/
+!diaries-responder/**
+diaries-responder/build/
+diaries-responder/change-control/
+diaries-responder/.git/
