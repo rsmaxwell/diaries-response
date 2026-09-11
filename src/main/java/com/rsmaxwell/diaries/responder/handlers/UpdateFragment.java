@@ -84,13 +84,15 @@ public class UpdateFragment extends RequestHandler {
 		        .month(month)
 		        .day(day)
 		        .sequence(sequence)
- 		        .text(text)
+		        .text(text)
+		        .pageId(originalFragment.getPageId())
+		        .type(originalFragment.getType())
 		        .lock(originalLock) // carry lock forward so we can clear it after version bump
 		        .build();
 			// @formatter:on			
 
 			// (4) check and bump the version
-			incomingFragment = new Fragment(fragmentDBDTO);
+			incomingFragment = new Fragment(originalFragment.getPage(), fragmentDBDTO);
 			incomingFragment.checkAndIncrementVersion(originalFragment);
 
 			// (5) release the lock after successful update

@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.diaries.responder.model.LockInfo;
+import com.rsmaxwell.diaries.responder.model.FragmentType;
+import com.rsmaxwell.diaries.responder.model.Fragment;
 import com.rsmaxwell.diaries.responder.utilities.Rectangle;
 
 class RetainedStateDtoContractTest {
@@ -96,6 +98,8 @@ class RetainedStateDtoContractTest {
 		FragmentPublishDTO dto = FragmentPublishDTO.builder()
 				.id(33L)
 				.version(4L)
+				.pageId(22L)
+				.type(FragmentType.MARQUEE)
 				.year(2026)
 				.month(9)
 				.day(1)
@@ -114,8 +118,10 @@ class RetainedStateDtoContractTest {
 		assertSinglePayload(topics);
 		JsonNode payload = onlyPayload(topics);
 		assertFields(payload,
-				"id", "version", "year", "month", "day", "sequence",
+				"id", "version", "pageId", "type", "year", "month", "day", "sequence",
 				"text", "marqueeId", "lock");
+		assertEquals(22L, payload.get("pageId").longValue());
+		assertEquals("MARQUEE", payload.get("type").textValue());
 		assertEquals(44L, payload.get("marqueeId").longValue());
 
 		JsonNode lockPayload = payload.get("lock");
@@ -153,6 +159,30 @@ class RetainedStateDtoContractTest {
 		assertTrue(payload.get("lock").isNull());
 		assertTrue(payload.has("marqueeId"));
 		assertTrue(payload.get("marqueeId").isNull());
+		assertTrue(payload.has("pageId"));
+		assertTrue(payload.get("pageId").isNull());
+		assertTrue(payload.has("type"));
+		assertTrue(payload.get("type").isNull());
+	}
+
+	@Test
+	void fragmentConstructedFromPersistenceDtoPublishesExplicitOwnership() throws Exception {
+		Fragment fragment = new Fragment(FragmentDBDTO.builder()
+				.id(35L)
+				.version(1L)
+				.pageId(85L)
+				.type(FragmentType.MARQUEE)
+				.year(1830)
+				.month(3)
+				.day(8)
+				.sequence(BigDecimal.ONE)
+				.text("Persisted")
+				.build());
+
+		JsonNode payload = MAPPER.readTree(new FragmentPublishDTO(fragment, null).toJson());
+
+		assertEquals(85L, payload.get("pageId").longValue());
+		assertEquals("MARQUEE", payload.get("type").textValue());
 	}
 
 	@Test

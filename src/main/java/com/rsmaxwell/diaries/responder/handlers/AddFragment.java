@@ -14,6 +14,7 @@ import com.rsmaxwell.diaries.responder.dto.FragmentDBDTO;
 import com.rsmaxwell.diaries.responder.dto.FragmentPublishDTO;
 import com.rsmaxwell.diaries.responder.dto.MarqueePublishDTO;
 import com.rsmaxwell.diaries.responder.model.Fragment;
+import com.rsmaxwell.diaries.responder.model.FragmentType;
 import com.rsmaxwell.diaries.responder.model.Marquee;
 import com.rsmaxwell.diaries.responder.model.Page;
 import com.rsmaxwell.diaries.responder.model.Role;
@@ -80,11 +81,13 @@ public class AddFragment extends RequestHandler {
                     .day(day)
                     .sequence(sequence)
                     .text(text)
+					.pageId(pageId)
+					.type(FragmentType.MARQUEE)
                     .version(version)
                     .build();
 			//@formatter:on
 
-			fragment = new Fragment(fragmentDTO);
+			fragment = new Fragment(page, fragmentDTO);
 
 			//@formatter:off			
 			marquee = Marquee.builder()

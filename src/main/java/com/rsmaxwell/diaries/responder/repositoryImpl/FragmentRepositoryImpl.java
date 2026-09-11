@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.rsmaxwell.diaries.responder.dto.FragmentDBDTO;
 import com.rsmaxwell.diaries.responder.model.Fragment;
+import com.rsmaxwell.diaries.responder.model.FragmentType;
 import com.rsmaxwell.diaries.responder.model.LockInfo;
 import com.rsmaxwell.diaries.responder.repository.FragmentRepository;
 import com.rsmaxwell.diaries.responder.utilities.SqlBuilder;
@@ -55,6 +56,8 @@ public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, Fra
 		list.add("month");
 		list.add("day");
 		list.add("text");
+		list.add("page_id");
+		list.add("type");
 
 		list.add("lock_user_id");
 		list.add("lock_username");
@@ -74,6 +77,8 @@ public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, Fra
 		list.add(entity.getMonth());
 		list.add(entity.getDay());
 		list.add(entity.getText());
+		list.add(entity.getPageId());
+		list.add(entity.getType());
 
 		LockInfo lock = entity.getLock();
 		if (lock == null) {
@@ -102,12 +107,14 @@ public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, Fra
 		Integer month = getIntegerFromSqlResult(result, 4, null);
 		Integer day = getIntegerFromSqlResult(result, 5, null);
 		String text = getStringFromSqlResult(result, 6, null);
+		Long pageId = getLongFromSqlResult(result, 7, null);
+		FragmentType type = FragmentType.fromDatabaseValue(getStringFromSqlResult(result, 8, null));
 
-		Long lockUserId = getLongFromSqlResult(result, 7, null);
-		String lockUserName = getStringFromSqlResult(result, 8, null);
-		String lockKnownAs = getStringFromSqlResult(result, 9, null);
-		Long lockTimeStamp = getLongFromSqlResult(result, 10, null);
-		String lockSessionId = getStringFromSqlResult(result, 11, null);
+		Long lockUserId = getLongFromSqlResult(result, 9, null);
+		String lockUserName = getStringFromSqlResult(result, 10, null);
+		String lockKnownAs = getStringFromSqlResult(result, 11, null);
+		Long lockTimeStamp = getLongFromSqlResult(result, 12, null);
+		String lockSessionId = getStringFromSqlResult(result, 13, null);
 
 		LockInfo lock = null;
 
@@ -128,6 +135,8 @@ public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, Fra
 				.day(day)
 				.sequence(sequence)
 				.text(text)
+				.pageId(pageId)
+				.type(type)
 				.version(version)
 				.lock(lock)
 		        .build();
@@ -206,7 +215,7 @@ public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, Fra
 
 		// @formatter:off
 	    String sql = SqlBuilder.create()
-	        .select("f.id, f.version, f.sequence, f.year, f.month, f.day, f.text, " +
+	        .select("f.id, f.version, f.sequence, f.year, f.month, f.day, f.text, f.page_id, f.type, " +
 	                "f.lock_user_id, f.lock_username, f.lock_known_as, f.lock_timestamp, f.lock_session_id")
 	        .from("fragment f")
 	        .leftJoin("marquee m").on("f.id = m.fragment_id")
@@ -228,7 +237,7 @@ public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, Fra
 
 		// @formatter:off
 	    String sql = SqlBuilder.create()
-	        .select("f.id, f.version, f.sequence, f.year, f.month, f.day, f.text, " +
+	        .select("f.id, f.version, f.sequence, f.year, f.month, f.day, f.text, f.page_id, f.type, " +
 	                "f.lock_user_id, f.lock_username, f.lock_known_as, f.lock_timestamp, f.lock_session_id")
 	        .from("fragment f")
 	        .innerJoin("marquee m").on("m.fragment_id = f.id")
@@ -253,7 +262,7 @@ public class FragmentRepositoryImpl extends AbstractCrudRepository<Fragment, Fra
 
 		// @formatter:off
 	    String sql = SqlBuilder.create()
-	        .select("id, version, sequence, year, month, day, text, " +
+	        .select("id, version, sequence, year, month, day, text, page_id, type, " +
 	                "lock_user_id, lock_username, lock_known_as, lock_timestamp, lock_session_id")
 	        .from("fragment")
 	        .where("lock_user_id is not null")

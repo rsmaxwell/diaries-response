@@ -65,7 +65,7 @@ public class UnlockFragment extends RequestHandler {
 				return Response.success(id);
 			}
 
-			Fragment fragment = new Fragment(optionalFragmentDTO.get());
+			Fragment fragment = context.inflateFragment(optionalFragmentDTO.get());
 
 			FragmentLocking.requireUnlockAllowed(fragment, claims);
 

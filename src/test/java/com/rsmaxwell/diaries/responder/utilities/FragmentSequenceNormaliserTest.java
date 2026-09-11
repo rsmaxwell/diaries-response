@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import com.rsmaxwell.diaries.responder.dto.FragmentDBDTO;
 import com.rsmaxwell.diaries.responder.model.Fragment;
+import com.rsmaxwell.diaries.responder.model.FragmentType;
 import com.rsmaxwell.diaries.responder.model.LockInfo;
 import com.rsmaxwell.diaries.responder.repository.FragmentRepository;
 import com.rsmaxwell.mqtt.rpc.exceptions.RpcStatusException;
@@ -106,6 +107,8 @@ class FragmentSequenceNormaliserTest {
 				.day(1)
 				.sequence(new BigDecimal("9.0000"))
 				.text("unchanged text")
+				.pageId(85L)
+				.type(FragmentType.MARQUEE)
 				.lock(lock)
 				.build();
 		RecordingFragmentRepository repository = new RecordingFragmentRepository(List.of(original));
@@ -125,6 +128,8 @@ class FragmentSequenceNormaliserTest {
 		assertEquals(2, stored.getMonth());
 		assertEquals(1, stored.getDay());
 		assertEquals(lock, stored.getLock());
+		assertEquals(85L, stored.getPageId());
+		assertEquals(FragmentType.MARQUEE, stored.getType());
 	}
 
 	@Test
@@ -203,6 +208,8 @@ class FragmentSequenceNormaliserTest {
 					.day(original.getDay())
 					.sequence(sequence)
 					.text(original.getText())
+					.pageId(original.getPageId())
+					.type(original.getType())
 					.lock(original.getLock())
 					.build());
 			return 1;

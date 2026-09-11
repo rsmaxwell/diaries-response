@@ -87,6 +87,9 @@ public class UpdateMarquee extends RequestHandler {
 			if (!originalFragment.getId().equals(fragmentId)) {
 				throw RpcStatusException.badRequest("Marquee does not belong to the supplied fragment");
 			}
+			if (originalFragment.getPageId() == null || !originalFragment.getPageId().equals(pageId)) {
+				throw RpcStatusException.badRequest("Marquee page must match the Fragment's authoritative page");
+			}
 
 			// (4) get the incoming Marquee
 

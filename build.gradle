@@ -456,6 +456,28 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+tasks.register('migration0022Inventory', JavaExec) {
+    group = 'migration'
+    description = 'Produces the read-only 0022 Fragment migration inventory.'
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.rsmaxwell.diaries.responder.migration.migration0022.Migration0022Inventory'
+
+    doFirst {
+        def configFile = providers.gradleProperty('migrationConfig').orNull
+        def outputDirectory = providers.gradleProperty('migrationOutput').orNull
+
+        if (!configFile || !outputDirectory) {
+            throw new GradleException(
+                'migration0022Inventory requires -PmigrationConfig=<file> ' +
+                'and -PmigrationOutput=<empty-directory>'
+            )
+        }
+
+        args '--config', configFile, '--output', outputDirectory
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {

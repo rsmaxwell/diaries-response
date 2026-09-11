@@ -14,10 +14,12 @@ import com.rsmaxwell.diaries.responder.dto.FragmentPublishDTO;
 import com.rsmaxwell.diaries.responder.dto.MarqueeDBDTO;
 import com.rsmaxwell.diaries.responder.dto.MarqueePublishDTO;
 import com.rsmaxwell.diaries.responder.model.Fragment;
+import com.rsmaxwell.diaries.responder.model.FragmentType;
 import com.rsmaxwell.diaries.responder.model.Marquee;
 import com.rsmaxwell.diaries.responder.model.Page;
 import com.rsmaxwell.diaries.responder.model.Role;
 import com.rsmaxwell.diaries.responder.repository.MarqueeRepository;
+import com.rsmaxwell.diaries.responder.repository.FragmentRepository;
 import com.rsmaxwell.diaries.responder.utilities.Authorization;
 import com.rsmaxwell.diaries.responder.utilities.DiaryContext;
 import com.rsmaxwell.mqtt.rpc.common.Response;
@@ -49,6 +51,7 @@ public class AddMarquee extends RequestHandler {
 		log.info("AddMarquee.handleRequest: Authorization.check: OK!");
 
 		MarqueeRepository marqueeRepository = context.getMarqueeRepository();
+		FragmentRepository fragmentRepository = context.getFragmentRepository();
 
 		Page page;
 		Fragment fragment;
@@ -73,6 +76,12 @@ public class AddMarquee extends RequestHandler {
 			if (existingMarqueeDTO.isPresent()) {
 				throw RpcStatusException.badRequest("Fragment already has a marquee");
 			}
+			if (fragment.getType() == FragmentType.IMAGE) {
+				throw RpcStatusException.badRequest("An IMAGE fragment cannot have a marquee");
+			}
+			if (fragment.getPageId() != null && !fragment.getPageId().equals(pageId)) {
+				throw RpcStatusException.badRequest("Fragment belongs to a different page");
+			}
 
 			marquee = Marquee.builder().id(0L).page(page).fragment(fragment).x(x).y(y).width(width).height(height).version(0L).build();
 
@@ -91,6 +100,13 @@ public class AddMarquee extends RequestHandler {
 
 		try {
 			tx.begin();
+
+			fragment.setPage(page);
+			fragment.setType(FragmentType.MARQUEE);
+			int fragmentCount = fragmentRepository.update(fragment);
+			if (fragmentCount != 1) {
+				throw new IllegalStateException("Expected to update one Fragment, updated " + fragmentCount);
+			}
 
 			Long marqueeId = marqueeRepository.save(marquee);
 			marquee.setId(marqueeId);

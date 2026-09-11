@@ -8,7 +8,12 @@ import com.rsmaxwell.diaries.responder.dto.FragmentPublishDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,6 +31,26 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Fragment extends Base {
+
+	/**
+	 * Authoritative Page ownership. Nullable only during the 0022 migration
+	 * compatibility window.
+	 */
+	@ManyToOne(optional = true)
+	@JoinColumn(name = "page_id")
+	private Page page;
+
+	/**
+	 * Retains the Page id when a persistence-oriented DTO is used without
+	 * inflating the Page object (for example sequence normalization).
+	 */
+	@Transient
+	private Long persistedPageId;
+
+	/** Nullable only while legacy image candidates are awaiting 0028 review. */
+	@Enumerated(EnumType.STRING)
+	@Column(name = "type", length = 16)
+	private FragmentType type;
 
 	@NonNull
 	private Integer year;
@@ -52,11 +77,20 @@ public class Fragment extends Base {
 
 	public Fragment(FragmentDBDTO dto) {
 		copyCommonFieldsFrom(dto);
+		this.persistedPageId = dto.getPageId();
 		copyLockFrom(dto.getLock());
+	}
+
+	public Fragment(Page page, FragmentDBDTO dto) {
+		this(dto);
+		if (page != null) {
+			setPage(page);
+		}
 	}
 
 	public Fragment(FragmentPublishDTO dto) {
 		copyCommonFieldsFrom(dto);
+		this.persistedPageId = dto.getPageId();
 		copyLockFrom(dto.getLock());
 	}
 
@@ -72,15 +106,26 @@ public class Fragment extends Base {
 			this.month = f.getMonth();
 			this.day = f.getDay();
 			this.text = f.getText();
+			this.type = f.getType();
 		} else if (dto instanceof FragmentPublishDTO f) {
 			this.sequence = f.getSequence();
 			this.year = f.getYear();
 			this.month = f.getMonth();
 			this.day = f.getDay();
 			this.text = f.getText();
+			this.type = f.getType();
 		} else {
 			throw new IllegalArgumentException("Unsupported DTO type: " + dto.getClass());
 		}
+	}
+
+	public Long getPageId() {
+		return page == null ? persistedPageId : page.getId();
+	}
+
+	public void setPage(Page page) {
+		this.page = page;
+		this.persistedPageId = page == null ? null : page.getId();
 	}
 
 	/**

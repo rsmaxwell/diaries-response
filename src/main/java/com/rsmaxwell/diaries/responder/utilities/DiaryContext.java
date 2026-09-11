@@ -49,7 +49,7 @@ public class DiaryContext {
 	public Map<String, String> loadFromDatabase() throws Exception {
 		ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
 
-		// Publish the diaries and and their child pages, marquees and fragments
+		// Publish diaries, pages and marquees through their existing hierarchy.
 		Iterable<DiaryDTO> diaries = diaryRepository.findAll();
 		for (DiaryDTO diaryDTO : diaries) {
 			diaryDTO.publish(map);
@@ -64,15 +64,13 @@ public class DiaryContext {
 					MarqueePublishDTO marqueePublishDTO = new MarqueePublishDTO(marquee);
 					marqueePublishDTO.publish(map, diaryDTO.getId());
 
-					Fragment fragment = marquee.getFragment();
-					FragmentPublishDTO fragmentPublishDTO = new FragmentPublishDTO(fragment, marquee);
-					fragmentPublishDTO.publish(map);
 				}
 			}
 		}
 
-		// And also publish those fragments which do NOT have an associated marquee/page
-		Iterable<FragmentDBDTO> fragments = fragmentRepository.findAllWithoutMarquee();
+		// Fragments are authoritative rows in their own right. Publish all of them
+		// independently of whether a Marquee currently exists.
+		Iterable<FragmentDBDTO> fragments = fragmentRepository.findAll();
 		for (FragmentDBDTO fragmentDTO : fragments) {
 			Fragment fragment = inflateFragment(fragmentDTO);
 
@@ -135,7 +133,11 @@ public class DiaryContext {
 	}
 
 	public Fragment inflateFragment(FragmentDBDTO fragmentDTO) throws Exception {
-		return inflateFragment(fragmentDTO.getId());
+		Fragment fragment = new Fragment(fragmentDTO);
+		if (fragmentDTO.getPageId() != null) {
+			fragment.setPage(inflatePage(fragmentDTO.getPageId()));
+		}
+		return fragment;
 	}
 
 	public Fragment inflateFragment(Long fragmentId) throws Exception {
@@ -144,7 +146,7 @@ public class DiaryContext {
 			throw new Exception("Fragment not found: id: " + fragmentId);
 		}
 		FragmentDBDTO fragmentDTO = optionalFragmentDTO.get();
-		return new Fragment(fragmentDTO);
+		return inflateFragment(fragmentDTO);
 	}
 
 	public Marquee inflateMarquee(Long marqueeId) throws Exception {
@@ -164,7 +166,7 @@ public class DiaryContext {
 		FragmentDBDTO fragmentDTO = optionalFragmentDTO.get();
 
 		Page page = inflatePage(marqueeDTO.getPageId());
-		Fragment fragment = new Fragment(fragmentDTO);
+		Fragment fragment = inflateFragment(fragmentDTO);
 		return new Marquee(page, fragment, marqueeDTO);
 	}
 

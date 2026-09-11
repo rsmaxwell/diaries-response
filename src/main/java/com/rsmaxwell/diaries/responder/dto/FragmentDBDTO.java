@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.diaries.responder.model.Base;
+import com.rsmaxwell.diaries.responder.model.FragmentType;
 import com.rsmaxwell.diaries.responder.model.LockInfo;
 
 import lombok.AllArgsConstructor;
@@ -35,6 +36,8 @@ public class FragmentDBDTO extends Base implements Jsonable {
 	private Integer day;
 	private BigDecimal sequence;
 	private String text;
+	private Long pageId;
+	private FragmentType type;
 
 	/**
 	 * Lock state for this fragment (may be null / empty => unlocked).

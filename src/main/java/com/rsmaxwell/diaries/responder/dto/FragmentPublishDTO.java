@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.diaries.responder.model.Base;
 import com.rsmaxwell.diaries.responder.model.Fragment;
+import com.rsmaxwell.diaries.responder.model.FragmentType;
 import com.rsmaxwell.diaries.responder.model.LockInfo;
 import com.rsmaxwell.diaries.responder.model.Marquee;
 
@@ -40,6 +41,8 @@ public class FragmentPublishDTO extends Base implements Jsonable {
 	private Integer day;
 	private BigDecimal sequence;
 	private String text;
+	private Long pageId;
+	private FragmentType type;
 	private Long marqueeId;
 
 	/**
@@ -58,6 +61,8 @@ public class FragmentPublishDTO extends Base implements Jsonable {
 		this.month = fragment.getMonth();
 		this.day = fragment.getDay();
 		this.text = fragment.getText();
+		this.pageId = fragment.getPageId();
+		this.type = fragment.getType();
 
 		// Include lock state in MQTT payloads (if present)
 		this.lock = fragment.getLock();
