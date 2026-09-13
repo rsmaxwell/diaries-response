@@ -56,11 +56,13 @@ import com.rsmaxwell.diaries.responder.handlers.UploadFile;
 import com.rsmaxwell.diaries.responder.model.Fragment;
 import com.rsmaxwell.diaries.responder.repository.DiaryRepository;
 import com.rsmaxwell.diaries.responder.repository.FragmentRepository;
+import com.rsmaxwell.diaries.responder.repository.ImageRepository;
 import com.rsmaxwell.diaries.responder.repository.MarqueeRepository;
 import com.rsmaxwell.diaries.responder.repository.PageRepository;
 import com.rsmaxwell.diaries.responder.repository.PersonRepository;
 import com.rsmaxwell.diaries.responder.repositoryImpl.DiaryRepositoryImpl;
 import com.rsmaxwell.diaries.responder.repositoryImpl.FragmentRepositoryImpl;
+import com.rsmaxwell.diaries.responder.repositoryImpl.ImageRepositoryImpl;
 import com.rsmaxwell.diaries.responder.repositoryImpl.MarqueeRepositoryImpl;
 import com.rsmaxwell.diaries.responder.repositoryImpl.PageRepositoryImpl;
 import com.rsmaxwell.diaries.responder.repositoryImpl.PersonRepositoryImpl;
@@ -270,25 +272,7 @@ public class Responder {
 			 EntityManager entityManager = entityManagerFactory.createEntityManager()) {
 			// @formatter:on
 
-			DiaryRepository diaryRepository = new DiaryRepositoryImpl(entityManager);
-			PageRepository pageRepository = new PageRepositoryImpl(entityManager);
-			PersonRepository personRepository = new PersonRepositoryImpl(entityManager);
-			FragmentRepository fragmentRepository = new FragmentRepositoryImpl(entityManager);
-			MarqueeRepository marqueeRepository = new MarqueeRepositoryImpl(entityManager);
-
-			DiaryContext context = new DiaryContext();
-			context.setConfig(config);
-			context.setEntityManagerFactory(entityManagerFactory);
-			context.setEntityManager(entityManager);
-			context.setDiaryRepository(diaryRepository);
-			context.setPageRepository(pageRepository);
-			context.setPersonRepository(personRepository);
-			context.setFragmentRepository(fragmentRepository);
-			context.setMarqueeRepository(marqueeRepository);
-			context.setSecret(config.getSecret());
-			context.setDiaries(config.getDiaries());
-			context.setRefreshPeriod(config.getRefreshPeriodSeconds());
-			context.setRefreshExpiration(config.getRefreshExpirationSeconds());
+			DiaryContext context = createContext(config, entityManagerFactory, entityManager);
 
 			// Synchronise the topic tree with the database
 			Synchronise sync = new Synchronise();
@@ -300,6 +284,32 @@ public class Responder {
 
 			log.info("Success");
 		}
+	}
+
+	/** Startup wiring shared with integration tests; no broker or database replay side effects. */
+	static DiaryContext createContext(Config config, EntityManagerFactory entityManagerFactory, EntityManager entityManager) throws Exception {
+		DiaryRepository diaryRepository = new DiaryRepositoryImpl(entityManager);
+		PageRepository pageRepository = new PageRepositoryImpl(entityManager);
+		PersonRepository personRepository = new PersonRepositoryImpl(entityManager);
+		FragmentRepository fragmentRepository = new FragmentRepositoryImpl(entityManager);
+		MarqueeRepository marqueeRepository = new MarqueeRepositoryImpl(entityManager);
+		ImageRepository imageRepository = new ImageRepositoryImpl(entityManager);
+
+		DiaryContext context = new DiaryContext();
+		context.setConfig(config);
+		context.setEntityManagerFactory(entityManagerFactory);
+		context.setEntityManager(entityManager);
+		context.setDiaryRepository(diaryRepository);
+		context.setPageRepository(pageRepository);
+		context.setPersonRepository(personRepository);
+		context.setFragmentRepository(fragmentRepository);
+		context.setMarqueeRepository(marqueeRepository);
+		context.setImageRepository(imageRepository);
+		context.setSecret(config.getSecret());
+		context.setDiaries(config.getDiaries());
+		context.setRefreshPeriod(config.getRefreshPeriodSeconds());
+		context.setRefreshExpiration(config.getRefreshExpirationSeconds());
+		return context;
 	}
 
 	private void respond(DiaryContext context, String server, User user) throws Exception {

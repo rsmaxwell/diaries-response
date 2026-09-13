@@ -13,6 +13,7 @@ import com.rsmaxwell.diaries.responder.config.Jdbc;
 import com.rsmaxwell.diaries.responder.config.User;
 import com.rsmaxwell.diaries.responder.model.Diary;
 import com.rsmaxwell.diaries.responder.model.Fragment;
+import com.rsmaxwell.diaries.responder.model.Image;
 import com.rsmaxwell.diaries.responder.model.Marquee;
 import com.rsmaxwell.diaries.responder.model.Page;
 import com.rsmaxwell.diaries.responder.model.Person;
@@ -112,7 +113,7 @@ public class GetEntityManager {
 			info.addClasses(Person.class.getName());
 			info.addClasses(Marquee.class.getName());
 			info.addClasses(Fragment.class.getName());
-			info.addClasses(Marquee.class.getName());
+			info.addClasses(Image.class.getName());
 
 			entityManagerFactory = Bootstrap.getEntityManagerFactoryBuilder(info, props).build();
 

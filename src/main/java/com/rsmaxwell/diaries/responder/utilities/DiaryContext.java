@@ -11,15 +11,18 @@ import com.rsmaxwell.diaries.responder.config.DiariesConfig;
 import com.rsmaxwell.diaries.responder.dto.DiaryDTO;
 import com.rsmaxwell.diaries.responder.dto.FragmentDBDTO;
 import com.rsmaxwell.diaries.responder.dto.FragmentPublishDTO;
+import com.rsmaxwell.diaries.responder.dto.ImageDBDTO;
 import com.rsmaxwell.diaries.responder.dto.MarqueeDBDTO;
 import com.rsmaxwell.diaries.responder.dto.MarqueePublishDTO;
 import com.rsmaxwell.diaries.responder.dto.PageDTO;
 import com.rsmaxwell.diaries.responder.model.Diary;
 import com.rsmaxwell.diaries.responder.model.Fragment;
+import com.rsmaxwell.diaries.responder.model.Image;
 import com.rsmaxwell.diaries.responder.model.Marquee;
 import com.rsmaxwell.diaries.responder.model.Page;
 import com.rsmaxwell.diaries.responder.repository.DiaryRepository;
 import com.rsmaxwell.diaries.responder.repository.FragmentRepository;
+import com.rsmaxwell.diaries.responder.repository.ImageRepository;
 import com.rsmaxwell.diaries.responder.repository.MarqueeRepository;
 import com.rsmaxwell.diaries.responder.repository.PageRepository;
 import com.rsmaxwell.diaries.responder.repository.PersonRepository;
@@ -39,6 +42,7 @@ public class DiaryContext {
 	private PersonRepository personRepository;
 	private FragmentRepository fragmentRepository;
 	private MarqueeRepository marqueeRepository;
+	private ImageRepository imageRepository;
 	private Integer refreshPeriod;
 	private Integer refreshExpiration;
 	private String secret;
@@ -106,6 +110,61 @@ public class DiaryContext {
 		} catch (Exception e) {
 			tx.rollback();
 			throw e;
+		}
+	}
+
+	/** Image metadata has no Page/Diary/Fragment dependency. */
+	public Image inflateImage(ImageDBDTO imageDTO) {
+		return new Image(imageDTO);
+	}
+
+	public Image inflateImage(Long imageId) throws Exception {
+		ImageDBDTO dto = imageRepository.findById(imageId)
+				.orElseThrow(() -> new Exception("Image not found: id: " + imageId));
+		return inflateImage(dto);
+	}
+
+	/** Returns a committed copy; the caller's candidate is unchanged even on rollback. */
+	public Image saveImage(Image image) throws Exception {
+		Image candidate = new Image(new ImageDBDTO(image));
+		return inImageTransaction(() -> {
+			imageRepository.save(candidate);
+			return candidate;
+		});
+	}
+
+	/** Persists the caller-supplied version, following the repository CRUD contract. */
+	public int updateImage(Image image) throws Exception {
+		Image candidate = new Image(new ImageDBDTO(image));
+		return inImageTransaction(() -> imageRepository.update(candidate));
+	}
+
+	@FunctionalInterface
+	private interface ImageTransaction<T> {
+		T execute() throws Exception;
+	}
+
+	/** These helpers own a transaction; callers with a transaction use the repository directly. */
+	private <T> T inImageTransaction(ImageTransaction<T> operation) throws Exception {
+		EntityTransaction tx = entityManager.getTransaction();
+		if (tx.isActive()) {
+			throw new IllegalStateException("Image helper cannot join or commit an existing transaction");
+		}
+		// Begin outside the catch: a failed begin must not roll back a caller transaction.
+		tx.begin();
+		try {
+			T result = operation.execute();
+			tx.commit();
+			return result;
+		} catch (Exception | Error failure) {
+			try {
+				if (tx.isActive()) {
+					tx.rollback();
+				}
+			} catch (Exception | Error rollbackFailure) {
+				failure.addSuppressed(rollbackFailure);
+			}
+			throw failure;
 		}
 	}
 

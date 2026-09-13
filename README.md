@@ -314,6 +314,22 @@ On startup, the responder:
 
 If `normaliseOnStartup` is enabled, startup may also normalise database/topic-tree state.
 
+The 0024 Image model is registered with the EntityManager factory and its
+repository is installed in `DiaryContext` during startup. Apply the explicit
+0024 Phase 2 schema migration before running with Hibernate schema validation;
+keep Hibernate DDL configuration at `validate` or `none`, not automatic schema
+creation/update. The migration runbook is in the parent repository's
+`change-control/in-progress/0024-FEAT - introduce reusable persistent Image catalogue/migration/README.md`.
+
+`DiaryContext.inflateImage` loads independent Image metadata. `saveImage`
+returns a committed copy without changing the caller's candidate; `updateImage`
+persists the caller-supplied version and returns the affected-row count. These
+helpers own their transactions and reject an already-active transaction.
+Callers managing a wider transaction use the Image repository directly. The
+context and its EntityManager retain their existing single-thread usage model.
+Image retained replay and upload/catalogue orchestration are later 0024 phases;
+the registration helpers themselves do not publish MQTT state or touch files.
+
 ## Static file server
 
 The responder includes a simple static file server.
