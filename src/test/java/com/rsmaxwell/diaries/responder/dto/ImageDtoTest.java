@@ -86,6 +86,8 @@ class ImageDtoTest {
 		assertEquals(Set.of("id", "version", "relativePath", "mimeType", "originalFilename",
 				"width", "height", "checksum", "caption", "altText"), names);
 		assertEquals(JSON.readTree(new ImageDBDTO(image()).toJson()), node);
+		assertEquals(41, node.get("id").longValue());
+		assertEquals("Caf\u00e9 50%_1.png", node.get("originalFilename").textValue());
 		assertEquals("Diary/Caf\u00e9 50%_1.png", node.get("relativePath").textValue());
 		assertEquals(1200, node.get("width").intValue());
 		assertEquals(800, node.get("height").intValue());

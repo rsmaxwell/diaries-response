@@ -14,10 +14,13 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rsmaxwell.diaries.responder.dto.FragmentDBDTO;
+import com.rsmaxwell.diaries.responder.dto.ImageDBDTO;
+import com.rsmaxwell.diaries.responder.dto.ImagePublishDTO;
 import com.rsmaxwell.diaries.responder.model.FragmentType;
 import com.rsmaxwell.diaries.responder.repository.DiaryRepository;
 import com.rsmaxwell.diaries.responder.repository.FragmentRepository;
 import com.rsmaxwell.diaries.responder.repository.MarqueeRepository;
+import com.rsmaxwell.diaries.responder.repository.ImageRepository;
 
 class DiaryContextTest {
 
@@ -38,6 +41,7 @@ class DiaryContextTest {
 				.build();
 
 		DiaryContext context = new DiaryContext();
+		context.setImageRepository(proxy(ImageRepository.class, Map.of("findAll", List.of())));
 		context.setDiaryRepository(proxy(DiaryRepository.class, Map.of("findAll", List.of())));
 		context.setFragmentRepository(proxy(FragmentRepository.class, Map.of(
 				"findAll", List.of(fragment),
@@ -53,6 +57,29 @@ class DiaryContextTest {
 		JsonNode payload = MAPPER.readTree(retained.get("diaries/fragments/33"));
 		assertTrue(payload.get("pageId").isNull());
 		assertTrue(payload.get("type").isNull());
+	}
+
+	@Test
+	void imageCatalogueReplaysWithoutAnyChronologyOrFileConfiguration() throws Exception {
+		ImageDBDTO first = ImageDBDTO.builder().id(91L).version(4L)
+				.relativePath("maps/Caf\u00e9 50%_1.png").mimeType("image/png")
+				.originalFilename("Caf\u00e9 50%_1.png").width(1200).height(800)
+				.checksum("ab".repeat(32)).caption("Harbour").altText("Old map").build();
+		ImageDBDTO second = ImageDBDTO.builder().id(12L).relativePath("a.jpg")
+				.mimeType("image/jpeg").originalFilename("a.jpg").width(20).height(30)
+				.checksum("cd".repeat(32)).build();
+		DiaryContext context = new DiaryContext();
+		context.setDiaryRepository(proxy(DiaryRepository.class, Map.of("findAll", List.of())));
+		context.setFragmentRepository(proxy(FragmentRepository.class, Map.of("findAll", List.of())));
+		context.setImageRepository(proxy(ImageRepository.class, Map.of("findAll", List.of(first, second))));
+		Map<String, String> expected = Map.of("diaries/images/91", new ImagePublishDTO(first).toJson(),
+				"diaries/images/12", new ImagePublishDTO(second).toJson());
+		assertEquals(expected, context.loadFromDatabase());
+		// Repository iteration order cannot change the canonical topic/payload set.
+		context.setImageRepository(proxy(ImageRepository.class, Map.of("findAll", List.of(second, first))));
+		assertEquals(expected, context.loadFromDatabase());
+		context.setImageRepository(proxy(ImageRepository.class, Map.of("findAll", List.of())));
+		assertEquals(Map.of(), context.loadFromDatabase());
 	}
 
 	@SuppressWarnings("unchecked")

@@ -251,6 +251,7 @@ dependencies {
     implementation libs.jakarta.jakartaee.api
     implementation libs.hibernate.core
     implementation libs.metadata.extractor
+    implementation libs.imageio.webp
     implementation libs.mqtt.rpc.common
     implementation libs.mqtt.rpc.responder
 }

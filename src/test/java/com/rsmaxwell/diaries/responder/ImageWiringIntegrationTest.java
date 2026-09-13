@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import com.rsmaxwell.diaries.responder.dto.ImagePublishDTO;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -158,10 +160,44 @@ class ImageWiringIntegrationTest {
 	}
 
 	@Test
-	void imageWritesDoNotAlterExistingRetainedReplayInPhaseThree() throws Exception {
+	void catalogueServicePublishesCommittedRowsAndUsesDatabasePathIdentity(@org.junit.jupiter.api.io.TempDir java.nio.file.Path root) throws Exception {
+		var store = com.rsmaxwell.diaries.responder.utilities.ImageCatalogueService.jpaCatalogue(factory);
+		var service = new com.rsmaxwell.diaries.responder.utilities.ImageCatalogueService(
+				new com.rsmaxwell.diaries.responder.utilities.ImagePathPolicy(root),
+				new com.rsmaxwell.diaries.responder.utilities.ImageMetadataInspector(), store, dto -> {
+					try (EntityManager reader = factory.createEntityManager()) {
+						assertEquals(dto.getChecksum(), reader.find(Image.class, dto.getId()).getChecksum());
+					}
+				});
+		byte[] bytes;
+		try (var in = getClass().getResourceAsStream("/image-inspection/sample.webp")) { bytes = in.readAllBytes(); }
+		var staged = service.stage(new java.io.ByteArrayInputStream(bytes), "maps", "Caf\u00e9 50%_1.txt",
+				"application/octet-stream", bytes.length, null);
+		Image saved = service.complete(staged, false).orElseThrow();
+		assertEquals("image/webp", saved.getMimeType());
+		assertTrue(store.owns("MAPS/CAF\u00c9 50%_1.TXT"));
+		assertFalse(store.owns("maps/Caf\u00e9 50ZZ1.txt"));
+		var duplicate = candidate("MAPS/CAF\u00c9 50%_1.TXT");
+		var failure = assertThrows(com.rsmaxwell.diaries.responder.utilities.ImageCatalogueService.WriteFailedException.class,
+				() -> store.insert(duplicate));
+		assertFalse(failure.outcomeUnknown());
+		assertEquals(1, context.getImageRepository().count());
+		assertArrayEquals(bytes, java.nio.file.Files.readAllBytes(staged.target()));
+	}
+
+	@Test
+	void databaseReplayAddsUnreferencedImagesAndPreservesChronologyTopics() throws Exception {
 		Map<String, String> before = context.loadFromDatabase();
-		context.saveImage(candidate("unreferenced.png"));
-		assertEquals(before, context.loadFromDatabase());
 		assertTrue(before.keySet().stream().noneMatch(t -> t.startsWith("diaries/images/")));
+		Image first = context.saveImage(candidate("unreferenced.png"));
+		Image second = context.saveImage(candidate("maps/Caf\u00e9 50%_1.png"));
+		Map<String, String> expected = new HashMap<>(before);
+		expected.put("diaries/images/" + first.getId(), new ImagePublishDTO(first).toJson());
+		expected.put("diaries/images/" + second.getId(), new ImagePublishDTO(second).toJson());
+		assertEquals(expected, context.loadFromDatabase());
+		// A fresh startup context reads the same durable catalogue without any file access.
+		try (EntityManager reader = factory.createEntityManager()) {
+			assertEquals(expected, Responder.createContext(config, factory, reader).loadFromDatabase());
+		}
 	}
 }

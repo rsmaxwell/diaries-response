@@ -1,6 +1,7 @@
 package com.rsmaxwell.diaries.responder.sync;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -9,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -117,6 +119,9 @@ public class Synchronise {
 		}
 
 		Map<String, String> databaseMap = context.loadFromDatabase();
+		// SUBACK does not mean the asynchronous retained replay has been consumed.
+		// Wait before comparing, including when the database catalogue is empty.
+		sync.waitForMessages();
 
 		log.info("sizeof(topicTreeMap) = {}", topicTreeMap.size());
 		log.info("sizeof(databaseMap) = {}", databaseMap.size());
@@ -365,7 +370,7 @@ public class Synchronise {
 		int count = 0;
 
 		// Make sure there is a matching topicTree entry for every database entry
-		for (Map.Entry<String, String> entry : databaseMap.entrySet()) {
+		for (Map.Entry<String, String> entry : new TreeMap<>(databaseMap).entrySet()) {
 			String topic = entry.getKey();
 			String string1 = entry.getValue();
 			String string2 = topicTreeMap.get(topic);
@@ -387,7 +392,7 @@ public class Synchronise {
 		int count = 0;
 
 		// If there is an entry in the topicTree but not in the database, then delete it
-		for (Map.Entry<String, String> entry : topicTreeMap.entrySet()) {
+		for (Map.Entry<String, String> entry : new TreeMap<>(topicTreeMap).entrySet()) {
 			String topic = entry.getKey();
 			String string1 = entry.getValue();
 			String string2 = databaseMap.get(topic);
@@ -409,12 +414,13 @@ public class Synchronise {
 	private void publish(MqttAsyncClient client, String topic, String value) throws Exception {
 		MqttMessage message;
 		if (value != null) {
-			message = new MqttMessage(value.getBytes());
+			message = new MqttMessage(value.getBytes(StandardCharsets.UTF_8));
 		} else {
 			message = new MqttMessage(new byte[0]); // use empty payload to delete retained
 		}
 
 		message.setRetained(true); // <-- This is critical for deletes to work
+		message.setQos(1);
 		client.publish(topic, message).waitForCompletion();
 		log.info(String.format("publish: topic: %s", topic));
 		log.info(String.format("         value: %s", value));

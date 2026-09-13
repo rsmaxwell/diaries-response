@@ -327,8 +327,57 @@ persists the caller-supplied version and returns the affected-row count. These
 helpers own their transactions and reject an already-active transaction.
 Callers managing a wider transaction use the Image repository directly. The
 context and its EntityManager retain their existing single-thread usage model.
-Image retained replay and upload/catalogue orchestration are later 0024 phases;
-the registration helpers themselves do not publish MQTT state or touch files.
+Startup replay includes every Image row, even with no Fragment references, at
+`diaries/images/{id}`. Its ten-field payload is metadata only: id, version,
+relativePath, mimeType, originalFilename, width, height, checksum, caption and
+altText. It contains no file bytes or resolved URL/absolute storage path.
+The synchroniser waits for retained replay before comparing with database
+state, publishes differences in topic order with QoS 1 and retain, and removes
+stale topics using empty retained payloads. Unchanged topics are not republished.
+The shared local broker ACL grants only the responder read/write access to
+`diaries/images/+`; reload that ACL before starting the updated responder.
+Production ACL deployment remains part of 0024 Phase 11. Client and web do not
+subscribe to the Image catalogue yet. Upload orchestration remains a later
+phase; the registration helpers themselves do not publish or touch files.
+
+0024 Phase 5 adds shared services for the subsequent handler integration:
+
+* `ImagePathPolicy` normalizes NFC and separators, preserves case, rejects
+  traversal/absolute/URI/non-portable names and existing case or Unicode aliases,
+  and rejects descendant symlinks/reparse points before filesystem operations.
+* `ImageMetadataInspector` decodes JPEG, PNG, GIF and WebP from their bytes,
+  including animated GIF/WebP. WebP uses TwelveMonkeys ImageIO 3.14.0. The defaults
+  are 20 MiB encoded bytes, 40 million decoded pixels across frames and 256
+  frames. Bad containers, decoder warnings, invalid dimensions, MIME mismatch
+  and checksum mismatch fail inspection. Extensions do not cause renaming.
+* `ResolvedUpload` carries immutable paths and inspected metadata from staging.
+  `ImageCatalogueService` hashes while staging, checks database ownership,
+  promotes with atomic no-replace hard-link creation, inserts with a fresh
+  EntityManager, commits and then invokes its publication callback. Generic
+  octet-stream content creates no Image row. The callback must acknowledge MQTT
+  delivery or throw so the caller can report a publication failure.
+* Definitive insert rollback removes the promoted file and restores an
+  uncatalogued overwrite backup. An uncertain commit or failed compensation
+  preserves recovery files and throws `RecoveryRequiredException`. A publication
+  failure preserves the committed row/file and supplies the DTO for replay.
+
+The Files root must be writable only by trusted server processes. Staging is
+reserved under `.image-staging`, with owner-only POSIX permissions (Windows
+inherits the server account's directory ACL). File operations use a process
+critical section and a shared filesystem lock. The filesystem must support
+hard links, atomic moves and reliable locks; unsupported operations fail closed.
+Verify these properties on the deployment mount before activation. Arbitrary
+external writers must not mutate the root or staging area during operations.
+Phases 6/7 must wire the handlers to these services and exclude the reserved
+staging directory from listing, deletion and HTTP serving before activation.
+No existing RPC handler uses these new services yet.
+
+Phase 5 tests cover path attacks, content detection, concurrent uploads,
+rollback/backup restoration, uncertain commits and post-commit publication.
+`src/test/resources/image-inspection/PackagedInspectionProbe.java` additionally
+checks decoder discovery and filesystem operations against the fat JAR on
+Windows and Linux. Evidence is recorded in the parent change-control package
+`evidence/phase-05-services`.
 
 ## Static file server
 

@@ -12,6 +12,7 @@ import com.rsmaxwell.diaries.responder.dto.DiaryDTO;
 import com.rsmaxwell.diaries.responder.dto.FragmentDBDTO;
 import com.rsmaxwell.diaries.responder.dto.FragmentPublishDTO;
 import com.rsmaxwell.diaries.responder.dto.ImageDBDTO;
+import com.rsmaxwell.diaries.responder.dto.ImagePublishDTO;
 import com.rsmaxwell.diaries.responder.dto.MarqueeDBDTO;
 import com.rsmaxwell.diaries.responder.dto.MarqueePublishDTO;
 import com.rsmaxwell.diaries.responder.dto.PageDTO;
@@ -87,6 +88,11 @@ public class DiaryContext {
 
 			FragmentPublishDTO fragmentPublishDTO = new FragmentPublishDTO(fragment, marquee);
 			fragmentPublishDTO.publish(map);
+		}
+
+		// Catalogue rows have no chronology ownership and may have no references.
+		for (ImageDBDTO imageDTO : imageRepository.findAll()) {
+			new ImagePublishDTO(imageDTO).publish(map);
 		}
 
 		return map;
